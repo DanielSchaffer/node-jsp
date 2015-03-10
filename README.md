@@ -1,3 +1,3 @@
 #node-jsp
 
-A simple parser and view engine for JSP
+A very simple parser and view engine for JSP

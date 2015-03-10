@@ -1,0 +1,21 @@
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+        version="2.0">
+
+    <description>Example Tag Library</description>
+    <display-name>Example Tag Library/display-name>
+    <tlib-version>1.0</tlib-version>
+    <short-name>mesmo</short-name>
+    <uri>http://mesmotv.com/jsp/jstl</uri>
+
+    <tag>
+        <description>
+            Example tag!
+        </description>
+        <name>example</name>
+        <tag-class>com.videocritic.web.taglib.Example</tag-class>
+        <body-content>scriptless</body-content>
+    </tag>
+
+</taglib>

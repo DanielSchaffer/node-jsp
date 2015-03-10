@@ -1,0 +1,1 @@
+module.exports = require('../utility/include').fromAttrs('file');
