@@ -1,4 +1,4 @@
-var bindingHandler = require('./handlers/binding'),
+var bindingHandler = require('./binding'),
 
     bindingPattern = /^\$\{(.+)\}$/;
 

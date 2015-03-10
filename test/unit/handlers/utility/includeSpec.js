@@ -15,7 +15,7 @@ describe('include', function () {
     var include;
 
     beforeEach(function () {
-        include = require('../../../src/handlers/utility/include');
+        include = require('../../../../src/handlers/utility/include');
     });
 
     it('should be a function', function () {
@@ -77,7 +77,7 @@ describe('include.fromAttrs', function () {
     var include;
 
     beforeEach(function () {
-        include = require('../../../src/handlers/utility/include');
+        include = require('../../../../src/handlers/utility/include');
     });
 
     it('should return a rejected promise if no node object is passed', function (done) {

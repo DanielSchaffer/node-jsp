@@ -7,7 +7,7 @@ var fs = require('fs'),
 
     bindingHandler = require('./handlers/binding'),
     htmlHandler = require('./handlers/tags/html'),
-    textHandler = require('./handlers.text');
+    textHandler = require('./handlers/text');
 
 module.exports = function parser(callingPath, jspContent, model, options) {
     var handlers = options && options.parser && options.parser.handlers,
