@@ -10,6 +10,16 @@
     <div id="will-not-be-there"></div>
 </c:if>
 
+<c:choose>
+    <c:when test="${foo}"><div id="when-content"></div></c:when>
+    <c:when test="${doesNotExist}"><div id="when-no-match"></div></c:when>
+</c:choose>
+
+<c:choose>
+    <c:when test="${doesNotExist}"><div id="when-no-match-otherwise"></div></c:when>
+    <c:otherwise><div id="otherwise-content"></div></c:otherwise>
+</c:choose>
+
 <jsp:include page="include.jsp" />
 
 <div id="on-example">testContent</div>

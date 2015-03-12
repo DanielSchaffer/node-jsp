@@ -1,6 +1,4 @@
-var vm = require('vm'),
-
-    binding = require('../../binding');
+var binding = require('../../binding');
 
 function ifTag(callingPath, node, model) {
 
