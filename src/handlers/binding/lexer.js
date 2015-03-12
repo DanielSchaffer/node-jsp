@@ -18,10 +18,9 @@ var _ = require('underscore'),
         ['<=', 'lte'],
         ['>', 'gt'],
         ['<', 'lt'],
-        [/^[a-zA-Z]+[\w]*/, 'ident'],
+        [/^[a-zA-Z]+[\w]*(\.[a-zA-Z]+[\w]*)*/, 'ident'],
         [/^\d*(\.\d+)*/, 'number'],
-        [/^\s+/, 'whitespace', true],
-        ['.', 'dot']
+        [/^\s+/, 'whitespace', true]
     ],
     tokenNames = _.chain(tokens)
         .map(function (token) {

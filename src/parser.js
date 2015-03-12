@@ -1,11 +1,11 @@
 var fs = require('fs'),
     path = require('path'),
+    vm = require('vm'),
 
     htmlparser = require('htmlparser'),
     q = require('./q.allObject'),
     _ = require('underscore'),
 
-    bindingHandler = require('./handlers/binding'),
     htmlHandler = require('./handlers/tags/html'),
     textHandler = require('./handlers/text');
 
@@ -65,7 +65,7 @@ module.exports = function parser(callingPath, jspContent, model, options) {
 
         return findDirectiveHandler(directiveName)
             .then(function (directiveHandler) {
-                return directiveHandler(callingPath, node);
+                return directiveHandler(callingPath, node, model);
             })
             .then(renderContent);
     }
@@ -103,7 +103,7 @@ module.exports = function parser(callingPath, jspContent, model, options) {
     function renderTag(node) {
         return findTagHandler(node.name)
             .then(function (tagHandler) {
-                return tagHandler(callingPath, node);
+                return tagHandler(callingPath, node, model);
             });
     }
 
@@ -122,7 +122,7 @@ module.exports = function parser(callingPath, jspContent, model, options) {
                 break;
 
             case 'text':
-                content = textHandler(node);
+                content = textHandler(node, model);
                 break;
 
         }
@@ -139,6 +139,7 @@ module.exports = function parser(callingPath, jspContent, model, options) {
                     result += renderedContent.node;
                 }
 
+                console.log('renderedContent', node, renderedContent);
                 if (renderedContent.node.begin) {
                     result += renderedContent.node.begin;
                 }
@@ -174,6 +175,11 @@ module.exports = function parser(callingPath, jspContent, model, options) {
             return '';
         }
     }
+
+    if (!model) {
+        model = {};
+    }
+    vm.createContext(model);
 
     return renderContent(jspContent);
 };

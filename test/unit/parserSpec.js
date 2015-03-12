@@ -11,18 +11,16 @@ describe('parser', function () {
         parser = require('../../src/parser');
     });
 
-    it('should blah blah blah', function (done) {
+    it('should render the template', function (done) {
 
         var filePath = path.resolve(__dirname, '../examples/example.jsp'),
             callingPath = path.dirname(filePath),
             content = fs.readFileSync(filePath, { encoding: 'utf8'}),
-            model = { foo: 'bar' };
+            model = { foo: 'bar', oy: 'vey' };
 
         parser(callingPath, content, model)
             .then(function (result) {
-                console.log('result', result);
-
-                expect(result).to.equal('<div id="included"></div><div id="on-example">testContent</div><div id="binding"></div>');
+                expect(result).to.equal('<div id="included"></div><div id="on-example">testContent</div><div id="binding">bound value 1: bar bound value 2: vey</div>');
             })
             .then(done, done);
 

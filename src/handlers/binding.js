@@ -1,76 +1,24 @@
-var tokens = [
-    ['empty', 'empty'],
-    ['!', 'not'],
-    ['(', 'lparen'],
-    [')', 'rparen'],
-    ['+', 'plus'],
-    ['-', 'minus'],
-    ['*', 'times'],
-    ['/', 'slash'],
-    [';', 'semicolon'],
-    [':', 'colon'],
-    ['&&', 'and'],
-    ['||', 'or'],
-    ['==', 'eq'],
-    ['!=', 'neq'],
-    ['>', 'gt'],
-    ['<', 'lt'],
-    ['>=', 'gte'],
-    ['<=', 'lte'],
-    [/\w+[\w\d]*/, 'ident'],
-    [/\d+/, 'number'],
-    [/\s+/, 'whitespace']
-    ],
-    tokenHandlers = {
-        empty: {
-            next: ['value'],
-            exec: function execEmpty(value) {
-                return typeof(value) === 'undefined' || value === '' || value === null;
-            }
-        },
-        not: {
-            next: ['empty'],
-            exec: function execNot(empty) {
-                return !empty;
-            }
-        },
-        lparen: {
-            next: ['empty', 'not', 'value']
-        }
-    },
-    expression = ['value', 'not', 'empty'],
-    comparators = ['and', 'or', 'eq', 'neq', 'gt', 'gte', 'lt', 'lte'];
+var vm = require('vm'),
+    executor = require('./executor'),
+    lexer = require('./binding/lexer'),
+    translator = require('./binding/translator'),
 
-function bindValue(expression, model) {
-    var parts, target, node;
+    pattern = /\$\{(.+?)\}/g;
 
-    if (!model) {
-        return null;
-    }
+function bind(expression, model) {
 
-    parts = expression.split('.');
-    node = parts[0];
+    console.log('binding.bind', expression);
+    var tokens = lexer(expression),
+        translatedTokens = translator(tokens, model);
 
-    if (node === 'null') {
-        return null;
-    }
+    return executor(translatedTokens, model);
 
-    target = model[node];
-
-    if (parts.length > 1) {
-        return bindValue(parts.slice(1).join('.'), target);
-    }
-
-    return target;
 }
 
-module.exports = function binding(expression, model) {
+module.exports = function binding(input, model) {
 
-
-    function lex(token) {
-
-    }
-
-    var tokens = expression.split(/\s+/);
+    return input.replace(pattern, function replace(match, expression) {
+        return bind(expression, model);
+    });
 
 };
