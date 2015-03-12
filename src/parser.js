@@ -103,8 +103,35 @@ module.exports = function parser(callingPath, jspContent, model, options) {
     function renderTag(node) {
         return findTagHandler(node.name)
             .then(function (tagHandler) {
+                if (tagHandler.renderChildrenFirst) {
+                    return renderChildren(node)
+                        .then(function (childContent) {
+                            node.childContent = childContent && childContent.join('') || '';
+                            node.children = null;
+                            return tagHandler;
+                        });
+                }
+                return tagHandler;
+            })
+            .then(function (tagHandler) {
                 return tagHandler(callingPath, node, model);
             });
+    }
+
+    function renderChildren(node) {
+        if (node.children && node.children.length) {
+            return renderNode(node.children.shift())
+                .then(function (renderedChild) {
+                    if (!node.childContent) {
+                        node.childContent = '';
+                    }
+                    node.childContent += renderedChild;
+                    return renderChildren(node);
+                });
+        }
+        node.children = null;
+
+        return q.when(node.childContent ? [node.childContent] : null);
     }
 
     function renderNode(node) {
@@ -127,19 +154,21 @@ module.exports = function parser(callingPath, jspContent, model, options) {
 
         }
 
-        return q.all({
-            node: q.when(content || ''),
-            children: q.when(node.children ? q.all(_.map(node.children, renderNode)) : '')
-        })
+        return q.when(content || '')
             .then(function (renderedContent) {
-                var result = '';
+                return q.all({
+                    node: renderedContent,
+                    children: renderChildren(node)
+                });
+            })
+            .then(function (renderedContent) {
 
+                var result = '';
 
                 if (_.isString(renderedContent.node)) {
                     result += renderedContent.node;
                 }
 
-                console.log('renderedContent', node, renderedContent);
                 if (renderedContent.node.begin) {
                     result += renderedContent.node.begin;
                 }

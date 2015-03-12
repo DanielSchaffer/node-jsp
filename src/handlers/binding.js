@@ -7,7 +7,6 @@ var vm = require('vm'),
 
 function bind(expression, model) {
 
-    console.log('binding.bind', expression);
     var tokens = lexer(expression),
         translatedTokens = translator(tokens, model);
 

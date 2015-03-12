@@ -18,7 +18,9 @@ var _ = require('underscore'),
         },
         ident: {
             translate: function translateIdent(token, model) {
-                return bindValue(token.value, model);
+                var result = bindValue(token.value, model);
+                //return '(typeof(' + result + ')===\'undefined\'?null:' + result + ')';
+                return result;
             }
         }
     };
@@ -53,6 +55,10 @@ function bindValue(expression, model) {
 
     if (parts.length > 1) {
         return bindValue(parts.slice(1).join('.'), target);
+    }
+
+    if (typeof(target) === 'undefined' || target === null) {
+        return null;
     }
 
     return JSON.stringify(target);
