@@ -20,6 +20,8 @@ var _ = require('underscore'),
         ['<', 'lt'],
         [/^[a-zA-Z]+[\w]*(\.[a-zA-Z]+[\w]*)*/, 'ident'],
         [/^\d*(\.\d+)*/, 'number'],
+        [/^'.*?'/, 'sqliteral'],
+        [/^".*?"/, 'dqliteral'],
         [/^\s+/, 'whitespace', true]
     ],
     tokenNames = _.chain(tokens)

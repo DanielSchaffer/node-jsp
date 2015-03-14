@@ -25,3 +25,6 @@
 <div id="on-example">testContent</div>
 
 <div id="binding">bound value 1: ${foo} bound value 2: ${oy}</div>
+
+<div id="binding-with-sqliteral">${foo ? 'sqliteral!' : 'still-a-literal'}</div>
+<div id="binding-with-dqliteral">${foo ? "dqliteral!" : "still-a-literal"}</div>

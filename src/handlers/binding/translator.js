@@ -22,8 +22,15 @@ var _ = require('underscore'),
                 //return '(typeof(' + result + ')===\'undefined\'?null:' + result + ')';
                 return result;
             }
-        }
+        },
+        sqliteral: translateLiteral,
+        dqliteral: translateLiteral
     };
+
+function translateLiteral(token) {
+    console.log(token);
+    return token.data;
+}
 
 function translateNext(next, model) {
     if (next) {
