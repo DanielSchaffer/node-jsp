@@ -5,10 +5,21 @@ var fs = require('fs'),
 
 describe('parser', function () {
 
-    var parser;
+    var parser, parserOptions;
 
     beforeEach(function () {
         parser = require('../../src/parser');
+        parserOptions = {
+            tagNamespaces: {
+                '/test/examples/taglib.tld': {
+                    handlers: {
+                        example: function (context, callingPath, node) {
+                            return '';
+                        }
+                    }
+                }
+            }
+        }
     });
 
     it('should render the template', function (done) {
@@ -18,7 +29,7 @@ describe('parser', function () {
             content = fs.readFileSync(filePath, { encoding: 'utf8'}),
             model = { foo: 'bar', oy: 'vey' };
 
-        parser(callingPath, content, model)
+        parser(callingPath, content, model, parserOptions)
             .then(function (result) {
                 expect(result).to.equal(
                     '<div id="if-content"></div>' +
@@ -28,7 +39,8 @@ describe('parser', function () {
                     '<div id="on-example">testContent</div>' +
                     '<div id="binding">bound value 1: wat bound value 2: vey</div>' +
                     '<div id="binding-with-sqliteral">sqliteral!</div>' +
-                    '<div id="binding-with-dqliteral">dqliteral!</div>'
+                    '<div id="binding-with-dqliteral">dqliteral!</div>' +
+                    '<div id="custom-tag-passthrough"></div>'
                 );
             })
             .then(done, done);

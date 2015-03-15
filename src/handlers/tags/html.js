@@ -1,6 +1,6 @@
 var _ = require('underscore');
 
-module.exports = function htmlPassThroughHandler(callingPath, node) {
+module.exports = function htmlPassThroughHandler(context, callingPath, node) {
     var begin, end;
 
     begin = '<' + node.name;

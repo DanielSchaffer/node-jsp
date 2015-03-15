@@ -3,7 +3,7 @@ var fs = require('fs'),
 
     q = require('q');
 
-function include(callingPath, includeFile) {
+function include(context, callingPath, includeFile) {
 
     var deferred = q.defer(),
         resolvedPath;
@@ -46,7 +46,7 @@ function include(callingPath, includeFile) {
 
 include.fromAttrs = function includeFromAttrs(attrName) {
 
-    return function includedFromAttrs(callingPath, node) {
+    return function includedFromAttrs(context, callingPath, node) {
 
         if (!node) {
             return q.reject({ message: 'no node provided' });
@@ -59,7 +59,7 @@ include.fromAttrs = function includeFromAttrs(attrName) {
             });
         }
 
-        return include(callingPath, node.attribs[attrName]);
+        return include(context, callingPath, node.attribs[attrName]);
 
     };
 

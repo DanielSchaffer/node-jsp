@@ -1,6 +1,6 @@
 var binding = require('../../binding');
 
-function ifTag(callingPath, node, model) {
+function ifTag(context, callingPath, node, model) {
 
     var ifExpr;
 

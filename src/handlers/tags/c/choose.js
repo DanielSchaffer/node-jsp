@@ -2,7 +2,7 @@ var _ = require('underscore'),
 
     binding = require('../../binding');
 
-function chooseTag(callingPath, node, model) {
+function chooseTag(context, callingPath, node, model) {
 
     var match = _.find(node.children, function (childNode) {
 

@@ -2,7 +2,7 @@ var vm = require('vm'),
 
     binding = require('../../binding');
 
-function setTag(callingPath, node, model) {
+function setTag(context, callingPath, node, model) {
 
     var value, setExpr;
 

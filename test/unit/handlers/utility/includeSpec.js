@@ -36,7 +36,7 @@ describe('include', function () {
 
         var callingPath = 'callingPath';
 
-        include(callingPath)
+        include(null, callingPath)
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('no includeFile provided');
             })
@@ -49,7 +49,7 @@ describe('include', function () {
         var callingPath = __dirname + '/callingPath',
             includeFile = 'does.not.exist';
 
-        include(callingPath, includeFile)
+        include(null, callingPath, includeFile)
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('could not find file at ' + __dirname + '/callingPath/does.not.exist');
             })
@@ -62,7 +62,7 @@ describe('include', function () {
         var callingPath = __dirname,
             includeFile = 'includeSpec.included.jsp';
 
-        include(callingPath, includeFile)
+        include(null, callingPath, includeFile)
             .then(function (content) {
                 expect(content).to.equal('<div></div>');
             }, fail('should not be rejected'))
@@ -85,7 +85,7 @@ describe('include.fromAttrs', function () {
         var attrName = 'file',
             callingPath = 'callingPath';
 
-        include.fromAttrs(attrName)(callingPath)
+        include.fromAttrs(attrName)(null, callingPath)
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('no node provided');
             })
@@ -99,7 +99,7 @@ describe('include.fromAttrs', function () {
             node = { attribs: {} },
             callingPath = 'callingPath';
 
-        include.fromAttrs(attrName)(callingPath, node)
+        include.fromAttrs(attrName)(null, callingPath, node)
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('invalid node attribute "file"');
             })
@@ -113,7 +113,7 @@ describe('include.fromAttrs', function () {
             node = { attribs: { file: 'includeSpec.included.jsp' } },
             callingPath = __dirname;
 
-        include.fromAttrs(attrName)(callingPath, node)
+        include.fromAttrs(attrName)(null, callingPath, node)
             .then(function (content) {
                 expect(content).to.equal('<div></div>');
             }, fail('should not be rejected'))

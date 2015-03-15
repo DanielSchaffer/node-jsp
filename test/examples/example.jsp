@@ -28,3 +28,5 @@
 
 <div id="binding-with-sqliteral">${foo ? 'sqliteral!' : 'still-a-literal'}</div>
 <div id="binding-with-dqliteral">${foo ? "dqliteral!" : "still-a-literal"}</div>
+
+<mesmo:example><div id="custom-tag-passthrough"></div></mesmo:example>

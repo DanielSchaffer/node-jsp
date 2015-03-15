@@ -1,6 +1,6 @@
 var binding = require('./binding');
 
-module.exports = function textHandler(node, model) {
+module.exports = function textHandler(context, callingPath, node, model) {
 
     if (node.data === 'undefined') {
         console.log('does this really happen?');

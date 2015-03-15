@@ -6,6 +6,7 @@ var fs = require('fs'),
     q = require('./q.allObject'),
     _ = require('underscore'),
 
+    tagNamespaces = require('./handlers/tags/namespaces'),
     htmlHandler = require('./handlers/tags/html'),
     textHandler = require('./handlers/text');
 
@@ -15,7 +16,11 @@ module.exports = function parser(callingPath, jspContent, model, options) {
 
         tags = _.extend({
             html: htmlHandler
-        }, handlers && handlers.tags || {});
+        }, handlers && handlers.tags || {}),
+
+        context = {
+            tagNamespaces: tagNamespaces(options && options.tagNamespaces || {})
+        };
 
     function parseHtml(content) {
         var deferred = q.defer(),
@@ -32,8 +37,6 @@ module.exports = function parser(callingPath, jspContent, model, options) {
 
         return deferred.promise;
     }
-
-    function blankHandler() {}
 
     function findDirectiveHandler(name) {
         var deferred;
@@ -65,39 +68,22 @@ module.exports = function parser(callingPath, jspContent, model, options) {
 
         return findDirectiveHandler(directiveName)
             .then(function (directiveHandler) {
-                return directiveHandler(callingPath, node, model);
+                return directiveHandler(context, callingPath, node, model);
             })
             .then(renderContent);
     }
 
     function findTagHandler(tagName) {
-        var deferred,
-            parts = tagName.split(':'),
-            prefixed = parts.length > 1,
-            handlerPath;
-
-        if (tags[tagName]) {
-            return tags[tagName];
+        if (!tags[tagName]) {
+            tags[tagName] = q.when(context.tagNamespaces.getHandler(tagName))
+                .then(function (handler) {
+                    return handler;
+                }, function (r) {
+                    return tags.html;
+                });
         }
 
-        if (prefixed) {
-            handlerPath = './handlers/tags/' + parts[0] + '/' + parts[1];
-        } else {
-            handlerPath = './handlers/tags/' + tagName;
-        }
-
-        deferred = q.defer();
-        tags[tagName] = deferred.promise;
-
-        fs.exists(path.resolve(__dirname, handlerPath + '.js'), function (exists) {
-            if (exists) {
-                deferred.resolve(require(handlerPath));
-            } else {
-                deferred.resolve(tags.html);
-            }
-        });
-
-        return deferred.promise;
+        return tags[tagName];
     }
 
     function renderTag(node) {
@@ -114,7 +100,7 @@ module.exports = function parser(callingPath, jspContent, model, options) {
                 return tagHandler;
             })
             .then(function (tagHandler) {
-                return tagHandler(callingPath, node, model);
+                return tagHandler(context, callingPath, node, model);
             });
     }
 
@@ -149,7 +135,7 @@ module.exports = function parser(callingPath, jspContent, model, options) {
                 break;
 
             case 'text':
-                content = textHandler(node, model);
+                content = textHandler(context, callingPath, node, model);
                 break;
 
         }
