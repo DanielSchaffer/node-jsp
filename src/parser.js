@@ -78,7 +78,7 @@ module.exports = function parser(callingPath, jspContent, model, options) {
             tags[tagName] = q.when(context.tagNamespaces.getHandler(tagName))
                 .then(function (handler) {
                     return handler;
-                }, function (r) {
+                }, function () {
                     return tags.html;
                 });
         }

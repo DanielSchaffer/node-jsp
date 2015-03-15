@@ -38,6 +38,7 @@ describe('parser', function () {
                     '<div id="included"></div>' +
                     '<div id="on-example">testContent</div>' +
                     '<div id="binding">bound value 1: wat bound value 2: vey</div>' +
+                    '<div id="attr-binding" class="wat"></div>' +
                     '<div id="binding-with-sqliteral">sqliteral!</div>' +
                     '<div id="binding-with-dqliteral">dqliteral!</div>' +
                     '<div id="custom-tag-passthrough"></div>'

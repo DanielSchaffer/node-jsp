@@ -1,13 +1,13 @@
-var _ = require('underscore');
+var _ = require('underscore'),
+    binding = require('../binding');
 
-module.exports = function htmlPassThroughHandler(context, callingPath, node) {
+module.exports = function htmlPassThroughHandler(context, callingPath, node, model) {
     var begin, end;
 
     begin = '<' + node.name;
     if (node.attribs) {
-        begin += ' ';
         _.each(node.attribs, function (value, name) {
-            begin += name + '="' + value + '"';
+            begin += ' ' + name + '="' + binding(value, model) + '"';
         });
     }
     begin += '>';
