@@ -1,7 +1,7 @@
 {
   "name": "node-jsp",
   "description": "A simple parser and view engine for JSP",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/DanielSchaffer/node-jsp.git"
@@ -9,6 +9,7 @@
 
   "dependencies": {
     "htmlparser": "~1.7.7",
+    "q": "~2.0.3",
     "underscore": "~1.8.2"
   },
 
@@ -16,7 +17,6 @@
     "chai": "~2.1.1",
     "grunt": "~0.4.5",
     "jshint": "~2.6.3",
-    "mocha": "~2.2.1",
-    "q": "~2.0.3"
+    "mocha": "~2.2.1"
   }
 }
