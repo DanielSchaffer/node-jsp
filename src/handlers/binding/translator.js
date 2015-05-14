@@ -1,12 +1,10 @@
 var _ = require('underscore'),
 
-    lexer = require('./lexer'),
-
     tokenHandlers = {
         empty: {
             next: { allowed: ['ident'], required: true },
-            translate: function translateEmpty(token, model, next) {
-                var ident = translateNext(next, model);
+            translate: function translateEmpty(token, next) {
+                var ident = translateNext(next);
                 return '(typeof(' + ident + ')===\'undefined\'||' + ident + '===\'\'||' + ident + '===null)';
             }
         },
@@ -14,38 +12,44 @@ var _ = require('underscore'),
             next: { allowed: ['empty'], required: true }
         },
         dot: {
-            next: { allowed: ['ident'], required: true }
+            next: { allowed: ['ident'], required: true },
+            propertyAccessor: true
+        },
+        lparen: {
+            next: { allowed: ['ident', 'lparen', 'sqliteral', 'dqliteral', 'lbracket', 'number'], required: true },
+            closedBy: ['rparen'],
+            translate: translateClosedToken
         },
         lbracket: {
             next: { allowed: ['ident', 'lparen', 'sqliteral', 'dqliteral', 'lbracket', 'number'], required: true },
-            closedBy: 'rbracket',
-            translate: function translateBracket(token, model, next) {
-                console.log('translateBracket', token, next);
-            }
-        },
-        ident: {
-            translate: function translateIdent(token, model) {
-                return bindValue(token.value, model);
-            }
+            closedBy: ['rbracket'],
+            translate: translateClosedToken,
+            propertyAccessor: true
         },
         sqliteral: translateLiteral,
         dqliteral: translateLiteral
     };
 
+function translateClosedToken(token, next) {
+    return token.value + _.map(next, function (next) {
+            return next.translate(next.token, next.next);
+        }).join('');
+}
+
 function translateLiteral(token) {
     return token.data;
 }
 
-function translateNext(next, model) {
+function translateNext(next) {
     if (next) {
-        return next.translate(next.token, model, next.next);
+        return next.translate(next.token, next.next);
     }
 
     return '';
 }
 
-function defaultTranslator(token, model, next) {
-    return token.value + translateNext(next, model);
+function defaultTranslator(token, next) {
+    return token.value + translateNext(next);
 }
 
 function bindValue(expression, model) {
@@ -75,9 +79,13 @@ function bindValue(expression, model) {
     return JSON.stringify(target);
 }
 
-module.exports = function translator(tokens, model) {
+module.exports = function translator(tokens) {
 
-    var state = { stack: []};
+    var state = {
+        stack: [],
+        toClose: [],
+        awaitingNext: []
+    };
 
     tokens = tokens.slice(0);
 
@@ -89,61 +97,99 @@ module.exports = function translator(tokens, model) {
         return result;
     }
 
-    function slurp(skipPush, toClose) {
-        var token = tokens.shift(),
-            handler = tokenHandlers[token.name],
+    _.reduce(tokens, function (state, token) {
+
+        var handler = tokenHandlers[token.name],
             translate = handler && handler.translate || defaultTranslator,
-            currentToClose = toClose && toClose.length && _.last(toClose),
-            next;
+            currentToClose = state.toClose.length && _.last(state.toClose),
+            firstNext = state.awaitingNext.length && _.first(state.awaitingNext),
+            currentNext = state.awaitingNext.length && _.last(state.awaitingNext),
+            context = {
+                handler: handler,
+                token: token,
+                translate: translate,
+                contents: []
+            };
+
+        if (state.awaitingNext.length) {
+            var isValidNext = _.contains(currentNext.handler.next.allowed, token.name);
+            if (!isValidNext && currentNext.handler.next.required) {
+                throw 'unexpected ' + tokenAsLoggableString(token);
+            }
+
+            currentNext.next = context;
+            if (!handler || !handler.next) {
+                state.awaitingNext = [];
+                if (!currentNext.handler.closedBy && !currentNext.handler.continuedBy) {
+                    if (isValidNext) {
+                        state.stack.push(firstNext.translate(firstNext.token, firstNext.next));
+                    } else {
+                        state.stack.push(firstNext.translate(firstNext.token));
+                        state.stack.push(translate(token));
+                    }
+                    return state;
+                }
+            }
+        }
 
         if (handler && handler.next) {
-            if (handler.closedBy) {
-                if (!toClose) {
-                    toClose = [];
+            state.awaitingNext.push(context);
+
+            if (handler.closedBy || handler.continuedBy) {
+                if (currentToClose) {
+                    currentToClose.contents.push(context);
                 }
-                toClose.push({ handler: handler, token: token, translate: translate, contents: [] });
-            }
-            next = slurp(true, toClose);
-
-            if (handler.next.required && !next) {
-                throw 'expected one of token "' + handler.next.allowed.join('","') + '", got end-of-input';
+                state.toClose.push(context);
+                return state;
             }
 
-            if (!_.contains(handler.next.allowed, next.token.name)) {
-                if (handler.next.required) {
-                    throw 'unexpected ' + tokenAsLoggableString(next.token);
-                }
-
-                tokens.unshift(token);
-                next = null;
-            }
-        } else if (currentToClose) {
-            if (currentToClose.handler.closedBy === token.name) {
-                toClose.pop();
-                console.log('closing!');
-                currentToClose.translate(currentToClose.token, model, currentToClose.contents);
-            } else {
-                currentToClose.contents.push(token);
-                slurp(true, toClose);
-            }
+            return state;
         }
 
-        if (!skipPush && !currentToClose && (!handler || !handler.closedBy)) {
-            state.stack.push(translate(token, model, next));
+        if (currentToClose) {
+            var canBeClosed =
+                (currentToClose.handler.closedBy && _.contains(currentToClose.handler.closedBy, token.name)) ||
+                (currentToClose.handler.continuedBy && !_.contains(currentToClose.handler.continuedBy, token.name));
+
+            currentToClose.contents.push(context);
+
+            if (canBeClosed) {
+                state.toClose.pop();
+                var closed = currentToClose;
+                currentToClose = state.toClose.length && _.last(state.toClose);
+                if (currentToClose) {
+                    currentToClose.contents.push(closed);
+                } else {
+                    state.stack.push(closed.translate(closed.token, closed.contents));
+                }
+            }
+
+            return state;
         }
 
-        return {
-            token: token,
-            translate: translate,
-            next: next
-        };
+        state.stack.push(translate(token));
+
+        return state;
+    }, state);
+
+    var currentNext = state.awaitingNext.length && _.last(state.awaitingNext);
+    if (currentNext && currentNext.handler.next.required) {
+        throw state.stack.join('') + 'expected one of token "' + currentNext.handler.next.allowed.join('","') + '", got end-of-input';
     }
 
-    while (tokens.length) {
-        slurp();
+    while (state.toClose.length) {
+        var currentToClose = state.toClose.pop();
+        if (currentToClose.closedBy) {
+            throw state.stack.join('') + 'expected one of token "' + currentToClose.closedBy.join('","') + '", got end-of-input';
+        }
+        var closed = currentToClose;
+        currentToClose = state.toClose.length && _.last(state.toClose);
+        if (currentToClose) {
+            currentToClose.contents.push(closed);
+        } else {
+            state.stack.push(closed.translate(closed.token, closed.contents));
+        }
     }
 
-    return _.filter(state.stack, function (translatedToken) {
-        return translatedToken !== null;
-    });
+    return state.stack;
 };
