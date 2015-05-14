@@ -44,6 +44,40 @@ describe('translator', function () {
 
     });
 
+    //(featureGates['ThirdPartyOfferContinuousHeaderOffers'] || false)
+    it('should translate an expression using hash accessors', function () {
+
+        var model = { foo: { bar: 'wat' }},
+            expression = 'foo["bar"]',
+            tokens = lexer(expression);
+
+        var result = translator(tokens, model);
+
+        console.log('result', result);
+
+        expect(result.length).to.equal(4);
+        expect(result[0]).to.equal('{"bar":"wat"}');
+        expect(result[1]).to.equal('[');
+        expect(result[2]).to.equal('"bar"');
+        expect(result[3]).to.equal(']');
+
+    });
+
+    //(featureGates['ThirdPartyOfferContinuousHeaderOffers'] || false)
+    it('should translate an expression using hash accessors when the accessed object is null/empty/undefined', function () {
+
+        var model = {},
+            expression = 'foo["bar"]',
+            tokens = lexer(expression);
+
+        var result = translator(tokens, model);
+
+        console.log('result', result);
+
+        expect(result.length).to.equal(0);
+
+    });
+
     it('should translate a complex expression', function () {
 
         var model = { foo: { bar: 1234 }, oy: { vey: 5678 } },

@@ -16,6 +16,13 @@ var _ = require('underscore'),
         dot: {
             next: { allowed: ['ident'], required: true }
         },
+        lbracket: {
+            next: { allowed: ['ident', 'lparen', 'sqliteral', 'dqliteral', 'lbracket', 'number'], required: true },
+            closedBy: 'rbracket',
+            translate: function translateBracket(token, model, next) {
+                console.log('translateBracket', token, next);
+            }
+        },
         ident: {
             translate: function translateIdent(token, model) {
                 return bindValue(token.value, model);
@@ -82,14 +89,21 @@ module.exports = function translator(tokens, model) {
         return result;
     }
 
-    function slurp(skipPush) {
+    function slurp(skipPush, toClose) {
         var token = tokens.shift(),
             handler = tokenHandlers[token.name],
             translate = handler && handler.translate || defaultTranslator,
+            currentToClose = toClose && toClose.length && _.last(toClose),
             next;
 
         if (handler && handler.next) {
-            next = slurp(true);
+            if (handler.closedBy) {
+                if (!toClose) {
+                    toClose = [];
+                }
+                toClose.push({ handler: handler, token: token, translate: translate, contents: [] });
+            }
+            next = slurp(true, toClose);
 
             if (handler.next.required && !next) {
                 throw 'expected one of token "' + handler.next.allowed.join('","') + '", got end-of-input';
@@ -103,9 +117,18 @@ module.exports = function translator(tokens, model) {
                 tokens.unshift(token);
                 next = null;
             }
+        } else if (currentToClose) {
+            if (currentToClose.handler.closedBy === token.name) {
+                toClose.pop();
+                console.log('closing!');
+                currentToClose.translate(currentToClose.token, model, currentToClose.contents);
+            } else {
+                currentToClose.contents.push(token);
+                slurp(true, toClose);
+            }
         }
 
-        if (!skipPush) {
+        if (!skipPush && !currentToClose && (!handler || !handler.closedBy)) {
             state.stack.push(translate(token, model, next));
         }
 

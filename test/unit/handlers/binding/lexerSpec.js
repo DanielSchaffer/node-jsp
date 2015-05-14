@@ -59,6 +59,19 @@ describe('lexer', function () {
 
         });
 
+        it('should lex an identifier expression using hash accessors', function () {
+
+            var result = lexer('foo["bar"]');
+
+            expect(result).to.be.an('array');
+            expect(result.length).to.equal(4);
+            expect(result).to.have.property(0).that.deep.equals({ name: lexer.tokens.ident, value: 'foo' });
+            expect(result).to.have.property(1).that.deep.equals({ name: lexer.tokens.lbracket, value: '[' });
+            expect(result).to.have.property(2).that.deep.equals({ name: lexer.tokens.dqliteral, value: '"bar"' });
+            expect(result).to.have.property(3).that.deep.equals({ name: lexer.tokens.rbracket, value: ']' });
+
+        });
+
     });
 
     describe('numbers', function () {
@@ -161,6 +174,12 @@ describe('lexer', function () {
             expect(result).to.have.property(16).that.deep.equals({ name: lexer.tokens.slash, value: '/' });
             expect(result).to.have.property(17).that.deep.equals({ name: lexer.tokens.number, value: '.4321' });
             expect(result).to.have.property(18).that.deep.equals({ name: lexer.tokens.rparen, value: ')' });
+
+        });
+
+        it('should lex this silly expression too', function () {
+
+            var result = lexer('(featureGates["ThirdPartyOfferContinuousHeaderOffers"] || false)');
 
         });
 
