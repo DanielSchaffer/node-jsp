@@ -1,24 +1,24 @@
 var binding = require('../../binding');
 
-function ifTag(context, callingPath, node, model) {
+function ifTag(nodeContext) {
 
     var ifExpr;
 
-    if (!node.attribs.test) {
+    if (!nodeContext.node.attribs.test) {
         throw {
             message: 'missing required attribute "test"',
-            node: node
+            nodeContext: nodeContext
         };
     }
 
-    if (!node.childContent) {
+    if (!nodeContext.node.childContent) {
         throw {
             message: 'missing required content - no child content',
-            node: node
+            nodeContext: nodeContext
         };
     }
 
-    ifExpr = binding(node.attribs.test, model);
+    ifExpr = binding(nodeContext.node.attribs.test, nodeContext.model);
 
     try {
         // FIXME: why is it coming out 'null' (a string) instead of just the value null?
@@ -29,12 +29,12 @@ function ifTag(context, callingPath, node, model) {
         throw {
             message: 'error executing expression from c:if tag',
             expression: ifExpr,
-            model: model,
+            model: nodeContext.model,
             ex: ex.message
         };
     }
 
-    node.childContent = null;
+    nodeContext.node.childContent = null;
     return '';
 }
 ifTag.renderChildrenFirst = true;

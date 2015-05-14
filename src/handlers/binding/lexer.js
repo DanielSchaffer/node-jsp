@@ -18,7 +18,7 @@ var _ = require('underscore'),
         ['<=', 'lte'],
         ['>', 'gt'],
         ['<', 'lt'],
-        [/^[a-zA-Z]+[\w]*(\.[a-zA-Z]+[\w]*)*/, 'ident'],
+        [/^[a-zA-Z_]+[\w]*(\.[a-zA-Z_]+[\w]*)*/, 'ident'],
         [/^\d*(\.\d+)*/, 'number'],
         [/^'.*?'/, 'sqliteral'],
         [/^".*?"/, 'dqliteral'],
@@ -72,7 +72,6 @@ function lexer(expression) {
     }
 
     return result;
-
 }
 
 lexer.tokens = tokenNames;

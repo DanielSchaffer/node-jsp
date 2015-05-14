@@ -1,68 +1,59 @@
 var fs = require('fs'),
     path = require('path'),
 
-    q = require('q');
+    _ = require('underscore'),
+    q = require('q'),
 
-function include(context, callingPath, includeFile) {
+    parser = require('../../parser');
 
-    var deferred = q.defer(),
-        resolvedPath;
+function include(nodeContext, includeFile) {
 
-    if (!callingPath) {
-        return q.reject({ message: 'no callingPath provided' });
-    }
+    var resolvedPath;
 
     if (!includeFile) {
         return q.reject({ message: 'no includeFile provided' });
     }
 
-    resolvedPath = path.resolve(callingPath, includeFile);
+    resolvedPath = path.resolve(path.dirname(nodeContext.sourceFile), includeFile);
 
-    fs.exists(resolvedPath, function (exists) {
-        if (exists) {
-            fs.readFile(resolvedPath, { encoding: 'utf8' }, function (err, fileContent) {
-                if (err) {
-                    deferred.reject({
-                        message: 'error reading file ' + resolvedPath,
-                        callingPath: callingPath,
-                        includeFile: includeFile
-                    });
-                } else {
-                    deferred.resolve(fileContent);
+    return parser.parseFile(resolvedPath)
+        .then(function (rawContent) {
+            return _.extend({}, nodeContext, {
+                sourceFile: resolvedPath,
+                node: {
+                    children: rawContent
                 }
             });
-        } else {
-            deferred.reject({
-                message: 'could not find file at ' + resolvedPath,
-                callingPath: callingPath,
+        }, function (err) {
+            return q.reject(_.extend(err, {
+                nodeContext: nodeContext,
                 includeFile: includeFile
-            });
-        }
-    });
-
-    return deferred.promise;
-
+            }));
+        });
 }
 
-include.fromAttrs = function includeFromAttrs(attrName) {
+include.renderChildrenFirst = true;
 
-    return function includedFromAttrs(context, callingPath, node) {
+include.fromAttrs = function includeFromAttrs(attrName, renderChildrenFirst) {
 
-        if (!node) {
+    function includedFromAttrs(nodeContext) {
+
+        if (!nodeContext.node) {
             return q.reject({ message: 'no node provided' });
         }
 
-        if (!node.attribs[attrName]) {
+        if (!nodeContext.node.attribs[attrName]) {
             return q.reject({
                 message: 'invalid node attribute "' + attrName + '"',
-                node: node
+                nodeContext: nodeContext
             });
         }
 
-        return include(context, callingPath, node.attribs[attrName]);
+        return include(nodeContext, nodeContext.node.attribs[attrName]);
+    }
 
-    };
-
+    includedFromAttrs.renderChildrenFirst = renderChildrenFirst;
+    return includedFromAttrs;
 };
 
 module.exports = include;

@@ -1,49 +1,57 @@
 var vm = require('vm'),
+    _ = require('underscore'),
 
     binding = require('../../binding');
 
-function setTag(context, callingPath, node, model) {
+function setTag(nodeContext) {
 
     var value, setExpr;
 
-    if (!node.attribs.var) {
+    if (!nodeContext.node.attribs.var) {
         throw {
             message: 'missing required attribute "var"',
-            node: node
+            nodeContext: nodeContext
         };
     }
 
-    if (!node.attribs.value && !node.childContent) {
+    if (!nodeContext.node.attribs.value && !nodeContext.node.childContent) {
         throw {
             message: 'missing required content - no child content or value attribute',
-            node: node
+            nodeContext: nodeContext
         };
     }
 
-    if (node.attribs.value) {
-        value = binding(node.attribs.value);
+    if (nodeContext.node.attribs.value) {
+        value = binding(nodeContext.node.attribs.value, nodeContext.model);
     } else {
-        value = node.childContent;
+        value = nodeContext.node.childContent;
     }
+
+    value = value.replace(/"/g, '\\"');
+    value = value.replace(/\n\s*/g, '');
 
     if (value && isNaN(value) && (value[0] !== '{' || value[value.length - 1] !== '}')) {
         value = '"' + value + '"';
     }
 
-    setExpr = node.attribs.var + '=' + value;
+    setExpr = nodeContext.node.attribs.var + '=' + value;
 
     try {
-        vm.runInContext(setExpr, model);
+        vm.runInContext(setExpr, nodeContext.model);
+        nodeContext.node.childContent = '';
     } catch(ex) {
         throw {
             message: 'error executing expression from c:set tag',
             expression: setExpr,
-            model: model,
-            ex: ex
+            model: nodeContext.model,
+            ex: {
+                message: ex.message,
+                stack: ex.stack.replace('\\\\', '\\')
+            }
         };
     }
 
-    return '';
+    return null;
 }
 setTag.renderChildrenFirst = true;
 

@@ -1,1 +1,1 @@
-module.exports = require('../../utility/include').fromAttrs('page');
+module.exports = require('../../utility/include').fromAttrs('page', true);

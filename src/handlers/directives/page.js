@@ -1,3 +1,2 @@
-module.exports = function pageDirective(context, callingPath, node) {
-
+module.exports = function pageDirective(nodeContext) {
 };

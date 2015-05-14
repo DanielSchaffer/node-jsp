@@ -2,9 +2,9 @@ var _ = require('underscore'),
 
     binding = require('../../binding');
 
-function chooseTag(context, callingPath, node, model) {
+function chooseTag(nodeContext) {
 
-    var match = _.find(node.children, function (childNode) {
+    var match = _.find(nodeContext.node.children, function (childNode) {
 
         var test;
 
@@ -19,22 +19,22 @@ function chooseTag(context, callingPath, node, model) {
             };
         }
 
-        test = binding(childNode.attribs.test, model);
+        test = binding(childNode.attribs.test, nodeContext.model);
 
         return test && test !== 'null';
 
     });
 
     if (!match) {
-        match = _.find(node.children, function (childNode) {
+        match = _.find(nodeContext.node.children, function (childNode) {
             return childNode.name === 'c:otherwise';
         });
     }
 
     if (match) {
-        node.children = [match];
+        nodeContext.node.children = [match];
     } else {
-        node.children = null;
+        nodeContext.node.children = null;
     }
 
     return '';

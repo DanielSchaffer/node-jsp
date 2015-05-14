@@ -1,20 +1,20 @@
 var q = require('q');
 
-module.exports = function taglibDirective(context, callingPath, node) {
+module.exports = function taglibDirective(nodeContext) {
 
-    if (!node.attribs.uri) {
+    if (!nodeContext.node.attribs.uri) {
         return q.reject({
             message: 'node is missing uri attribute',
-            node: node
+            nodeContext: nodeContext
         });
     }
 
-    if (!node.attribs.prefix) {
+    if (!nodeContext.node.attribs.prefix) {
         return q.reject({
             message: 'node is missing prefix attribute',
-            node: node
+            nodeContext: nodeContext
         });
     }
 
-    context.tagNamespaces.registerPrefix(node.attribs.uri, node.attribs.prefix);
+    nodeContext.tagNamespaces.registerPrefix(nodeContext.node.attribs.uri, nodeContext.node.attribs.prefix);
 };

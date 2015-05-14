@@ -18,9 +18,7 @@ var _ = require('underscore'),
         },
         ident: {
             translate: function translateIdent(token, model) {
-                var result = bindValue(token.value, model);
-                //return '(typeof(' + result + ')===\'undefined\'?null:' + result + ')';
-                return result;
+                return bindValue(token.value, model);
             }
         },
         sqliteral: translateLiteral,
@@ -28,7 +26,6 @@ var _ = require('underscore'),
     };
 
 function translateLiteral(token) {
-    console.log(token);
     return token.data;
 }
 
@@ -73,7 +70,9 @@ function bindValue(expression, model) {
 
 module.exports = function translator(tokens, model) {
 
-    var state = { stack: [] };
+    var state = { stack: []};
+
+    tokens = tokens.slice(0);
 
     function tokenAsLoggableString(token) {
         var result = 'token "' + token.name + '"';
@@ -121,5 +120,7 @@ module.exports = function translator(tokens, model) {
         slurp();
     }
 
-    return state.stack;
+    return _.filter(state.stack, function (translatedToken) {
+        return translatedToken !== null;
+    });
 };

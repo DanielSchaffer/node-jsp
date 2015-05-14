@@ -1,26 +1,12 @@
-var fs = require('fs'),
-    path = require('path'),
-    vm = require('vm'),
-
-    htmlparser = require('htmlparser'),
+var htmlparser = require('htmlparser'),
     q = require('./q.allObject'),
-    _ = require('underscore'),
 
-    tagNamespaces = require('./handlers/tags/namespaces'),
-    htmlHandler = require('./handlers/tags/html'),
-    textHandler = require('./handlers/text');
+    fileReader = require('./fileReader');
 
-module.exports = function parser(callingPath, jspContent, model, options) {
-    var handlers = options && options.parser && options.parser.handlers,
-        directiveHandlers = handlers && handlers.directives || {},
+module.exports = function parser() {
 
-        tags = _.extend({
-            html: htmlHandler
-        }, handlers && handlers.tags || {}),
-
-        context = {
-            tagNamespaces: tagNamespaces(options && options.tagNamespaces || {})
-        };
+    // IMPORTANT - prevents the parser from treating JSP directives as unclosed elements
+    htmlparser.DefaultHandler._emptyTags['%@'] = 1;
 
     function parseHtml(content) {
         var deferred = q.defer(),
@@ -38,163 +24,27 @@ module.exports = function parser(callingPath, jspContent, model, options) {
         return deferred.promise;
     }
 
-    function findDirectiveHandler(name) {
-        var deferred;
-
-        if (directiveHandlers[name]) {
-            return directiveHandlers[name];
-        }
-
-        deferred = q.defer();
-        directiveHandlers[name] = deferred.promise;
-
-        fs.exists(path.resolve(__dirname, './handlers/directives/' + name + '.js'), function (exists) {
-            if (exists) {
-                deferred.resolve(require('./handlers/directives/' + name));
-            } else {
-                console.warn('no handler for directive', name);
-                deferred.reject({
-                    message: 'no handler for directive "' + name + '"'
-                });
-
-            }
-        });
-
-        return deferred.promise;
+    function cleanJspComments(content) {
+        return content.replace(/<%--.*?--%>/g, '');
     }
 
-    function renderDirective(node) {
-        var directiveName = _.keys(node.attribs)[0];
-
-        return findDirectiveHandler(directiveName)
-            .then(function (directiveHandler) {
-                return directiveHandler(context, callingPath, node, model);
-            })
-            .then(renderContent);
-    }
-
-    function findTagHandler(tagName) {
-        if (!tags[tagName]) {
-            tags[tagName] = q.when(context.tagNamespaces.getHandler(tagName))
-                .then(function (handler) {
-                    return handler;
-                }, function () {
-                    return tags.html;
-                });
-        }
-
-        return tags[tagName];
-    }
-
-    function renderTag(node) {
-        return findTagHandler(node.name)
-            .then(function (tagHandler) {
-                if (tagHandler.renderChildrenFirst) {
-                    return renderChildren(node)
-                        .then(function (childContent) {
-                            node.childContent = childContent && childContent.join('') || '';
-                            node.children = null;
-                            return tagHandler;
-                        });
-                }
-                return tagHandler;
-            })
-            .then(function (tagHandler) {
-                return tagHandler(context, callingPath, node, model);
-            });
-    }
-
-    function renderChildren(node) {
-        if (node.children && node.children.length) {
-            return renderNode(node.children.shift())
-                .then(function (renderedChild) {
-                    if (!node.childContent) {
-                        node.childContent = '';
-                    }
-                    node.childContent += renderedChild;
-                    return renderChildren(node);
-                });
-        }
-        node.children = null;
-
-        return q.when(node.childContent ? [node.childContent] : null);
-    }
-
-    function renderNode(node) {
-
-        var content;
-
-        switch(node.type) {
-
-            case 'tag':
-                if (node.name === '%@') {
-                    content = renderDirective(node);
-                } else {
-                    content = renderTag(node);
-                }
-                break;
-
-            case 'text':
-                content = textHandler(context, callingPath, node, model);
-                break;
-
-        }
-
-        return q.when(content || '')
-            .then(function (renderedContent) {
-                return q.all({
-                    node: renderedContent,
-                    children: renderChildren(node)
-                });
-            })
-            .then(function (renderedContent) {
-
-                var result = '';
-
-                if (_.isString(renderedContent.node)) {
-                    result += renderedContent.node;
-                }
-
-                if (renderedContent.node.begin) {
-                    result += renderedContent.node.begin;
-                }
-
-                if (renderedContent.children) {
-                    result += renderedContent.children.join('');
-                }
-
-                if (renderedContent.node.end) {
-                    result += renderedContent.node.end;
-                }
-
-                // console.log('\npiecing together node', node.name || node.type, node);
-                // console.log(renderedContent);
-                // console.log('result:', result);
-
-                return result;
-
-            });
-    }
-
-    function renderContent(content) {
+    function parseContent(content) {
         if (content) {
-            //console.log('\nrendering content', content);
-            return parseHtml(content)
-                .then(function handleHtml(dom) {
-                    return q.all(_.map(dom, renderNode));
-                })
-                .then(function (result) {
-                    return result.join('');
-                });
+            return parseHtml(cleanJspComments(content));
         } else {
-            return '';
+            return [];
         }
     }
 
-    if (!model) {
-        model = {};
+    function parseFile(file) {
+        return fileReader.read(file)
+            .then(function (rawContent) {
+                return parseContent(rawContent);
+            });
     }
-    vm.createContext(model);
 
-    return renderContent(jspContent);
-};
+    return {
+        parseContent: parseContent,
+        parseFile: parseFile
+    };
+}();

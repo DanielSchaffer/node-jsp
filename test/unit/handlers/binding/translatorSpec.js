@@ -8,7 +8,7 @@ describe('translator', function () {
 
     it('should translate a simple identifier binding', function () {
 
-        var model = { foo: 'bar'},
+        var model = { foo: 'bar' },
             expression = 'foo',
             tokens = lexer(expression);
 
@@ -16,6 +16,18 @@ describe('translator', function () {
 
         expect(result.length).to.equal(1);
         expect(result[0]).to.equal('"bar"');
+
+    });
+
+    it('should translate a simple identifier binding when there is no corresponding property', function () {
+
+        var model = {},
+            expression = 'foo',
+            tokens = lexer(expression);
+
+        var result = translator(tokens, model);
+
+        expect(result.length).to.equal(0);
 
     });
 

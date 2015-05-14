@@ -4,7 +4,7 @@ module.exports = function binder(translatedTokens, model) {
     var expression = translatedTokens.join(' ');
 
     if (!expression) {
-        return null;
+        return '';
     }
 
     try {
@@ -14,7 +14,10 @@ module.exports = function binder(translatedTokens, model) {
             message: 'error executing expression',
             expression: expression,
             model: model,
-            ex: ex
+            ex: {
+                message: ex.message,
+                source: ex.source
+            }
         };
     }
 };

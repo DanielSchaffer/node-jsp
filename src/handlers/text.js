@@ -1,12 +1,11 @@
 var binding = require('./binding');
 
-module.exports = function textHandler(context, callingPath, node, model) {
+module.exports = function textHandler(nodeContext) {
 
-    if (node.data === 'undefined') {
+    if (nodeContext.node.data === 'undefined') {
         console.log('does this really happen?');
         return '';
     }
 
-    return binding(node.data, model);
-
+    return binding(nodeContext.node.data, nodeContext.model);
 };

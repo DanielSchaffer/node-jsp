@@ -1,18 +1,18 @@
 var _ = require('underscore'),
     binding = require('../binding');
 
-module.exports = function htmlPassThroughHandler(context, callingPath, node, model) {
+module.exports = function htmlPassThroughHandler(nodeContext) {
     var begin, end;
 
-    begin = '<' + node.name;
-    if (node.attribs) {
-        _.each(node.attribs, function (value, name) {
-            begin += ' ' + name + '="' + binding(value, model) + '"';
+    begin = '<' + nodeContext.node.name;
+    if (nodeContext.node.attribs) {
+        _.each(nodeContext.node.attribs, function (value, name) {
+            begin += ' ' + name + '="' + binding(value, nodeContext.model) + '"';
         });
     }
     begin += '>';
 
-    end = '</' + node.name + '>';
+    end = '</' + nodeContext.node.name + '>';
 
     return {
         begin: begin,

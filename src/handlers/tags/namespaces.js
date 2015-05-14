@@ -47,7 +47,20 @@ module.exports = function namespaces(options) {
         }
 
         if (handlersByPrefix[prefix].handlerPath && (!handlersByPrefix[prefix].handlers || !handlersByPrefix[prefix][name])) {
-            return require(handlersByPrefix[prefix].handlerPath + name);
+            try {
+                return require(handlersByPrefix[prefix].handlerPath + name);
+            } catch (ex) {
+                return q.reject({
+                    message: 'exception loading handler',
+                    ex: {
+                        message: ex.message,
+                        stack: ex.stack
+                    },
+                    prefix: prefix,
+                    name: name,
+                    handlerPath: handlersByPrefix[prefix].handlerPath
+                });
+            }
         }
 
         return handlersByPrefix[prefix][name];

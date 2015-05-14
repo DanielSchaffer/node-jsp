@@ -5,7 +5,11 @@ function fail(message) {
     return function(reason) {
         throw {
             message: message,
-            reason: reason
+            reason: reason,
+            ex: {
+                message: reason.message,
+                stack: reason.stack
+            }
         };
     };
 }
@@ -22,21 +26,11 @@ describe('include', function () {
         expect(typeof(include)).to.equal('function');
     });
 
-    it('should return a rejected promise if no callingPath is passed', function (done) {
+    it('should return a rejected promise if no includeFile is passed', function (done) {
 
-        include()
-            .then(fail('should not be resolved'), function (reason) {
-                expect(reason.message).to.equal('no callingPath provided');
-            })
-            .then(done, done);
+        var sourceFile = 'sourceFile/sourceFile.jsp';
 
-    });
-
-    it('should return a rejected promise if includePath is passed', function (done) {
-
-        var callingPath = 'callingPath';
-
-        include(null, callingPath)
+        include({ sourceFile: sourceFile })
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('no includeFile provided');
             })
@@ -46,25 +40,26 @@ describe('include', function () {
 
     it('should return a rejected promise if the specified file to be included does not exist', function (done) {
 
-        var callingPath = __dirname + '/callingPath',
+        var sourceFile = __dirname + '/sourceFile/someFile.jsp',
             includeFile = 'does.not.exist';
 
-        include(null, callingPath, includeFile)
+        include({ sourceFile: sourceFile }, includeFile)
             .then(fail('should not be resolved'), function (reason) {
-                expect(reason.message).to.equal('could not find file at ' + __dirname + '/callingPath/does.not.exist');
+                expect(reason.message).to.equal('could not find file at ' + __dirname + '/sourceFile/does.not.exist');
             })
             .then(done, done);
 
     });
 
-    it('should return the content of the file', function (done) {
+    it('should return an object with the path and content of the file', function (done) {
 
-        var callingPath = __dirname,
-            includeFile = 'includeSpec.included.jsp';
+        var sourceFile = __dirname + '/exampleSource.jsp',
+            includeFile = __dirname + '/includeSpec.included.jsp';
 
-        include(null, callingPath, includeFile)
-            .then(function (content) {
-                expect(content).to.equal('<div></div>');
+        include({ sourceFile: sourceFile }, includeFile)
+            .then(function (result) {
+                expect(result.node.children).to.deep.have.members([{ type: 'tag', name: 'div' }]);
+                expect(result.sourceFile).to.equal(includeFile);
             }, fail('should not be rejected'))
             .then(done, done);
 
@@ -83,9 +78,9 @@ describe('include.fromAttrs', function () {
     it('should return a rejected promise if no node object is passed', function (done) {
 
         var attrName = 'file',
-            callingPath = 'callingPath';
+            sourceFile = 'sourcePath/sourceFile.jsp';
 
-        include.fromAttrs(attrName)(null, callingPath)
+        include.fromAttrs(attrName)({ sourceFile: sourceFile })
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('no node provided');
             })
@@ -97,9 +92,9 @@ describe('include.fromAttrs', function () {
 
         var attrName = 'file',
             node = { attribs: {} },
-            callingPath = 'callingPath';
+            sourceFile = 'sourcePath/sourceFile';
 
-        include.fromAttrs(attrName)(null, callingPath, node)
+        include.fromAttrs(attrName)({ sourceFile: sourceFile, node: node })
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('invalid node attribute "file"');
             })
@@ -111,11 +106,11 @@ describe('include.fromAttrs', function () {
 
         var attrName = 'file',
             node = { attribs: { file: 'includeSpec.included.jsp' } },
-            callingPath = __dirname;
+            sourceFile = __dirname + '/example.jsp';
 
-        include.fromAttrs(attrName)(null, callingPath, node)
-            .then(function (content) {
-                expect(content).to.equal('<div></div>');
+        include.fromAttrs(attrName)({ sourceFile: sourceFile, node: node })
+            .then(function (result) {
+                expect(result.node.children).to.deep.have.members([{ type: 'tag', name: 'div' }]);
             }, fail('should not be rejected'))
                 .then(done, done);
 
