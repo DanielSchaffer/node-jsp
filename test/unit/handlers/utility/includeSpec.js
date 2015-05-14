@@ -30,7 +30,7 @@ describe('include', function () {
 
         var sourceFile = 'sourceFile/sourceFile.jsp';
 
-        include({ sourceFile: sourceFile })
+        include({ sourceFile: sourceFile, node: {} })
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('no includeFile provided');
             })
@@ -43,7 +43,7 @@ describe('include', function () {
         var sourceFile = __dirname + '/sourceFile/someFile.jsp',
             includeFile = 'does.not.exist';
 
-        include({ sourceFile: sourceFile }, includeFile)
+        include({ sourceFile: sourceFile, node: {} }, includeFile)
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('could not find file at ' + __dirname + '/sourceFile/does.not.exist');
             })
@@ -56,7 +56,7 @@ describe('include', function () {
         var sourceFile = __dirname + '/exampleSource.jsp',
             includeFile = __dirname + '/includeSpec.included.jsp';
 
-        include({ sourceFile: sourceFile }, includeFile)
+        include({ sourceFile: sourceFile, node: {} }, includeFile)
             .then(function (result) {
                 expect(result.node.children).to.deep.have.members([{ type: 'tag', name: 'div' }]);
                 expect(result.sourceFile).to.equal(includeFile);

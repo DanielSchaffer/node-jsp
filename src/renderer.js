@@ -21,7 +21,7 @@ module.exports = function renderer(options) {
             html: {
                 tag: htmlDefaultTagHandler,
                 script: htmlDefaultTagHandler,
-                comment: htmlDefaultTagHandler,
+                comment: htmlDirectiveHandler,
                 directive: htmlDirectiveHandler,
                 style: htmlDefaultTagHandler
             }
@@ -97,7 +97,7 @@ module.exports = function renderer(options) {
         return q.when(handlerPromise)
             .then(function (handler) {
                 if (handler.renderChildrenFirst) {
-                    return renderChildren(nodeContext)
+                    return renderChildren(nodeContext, handler.mapChildren)
                         .then(function () {
                             return handler;
                         });
@@ -109,9 +109,9 @@ module.exports = function renderer(options) {
             });
     }
 
-    function renderChildren(nodeContext) {
+    function renderChildren(nodeContext, mapChildren) {
         if (nodeContext.node.children && nodeContext.node.children.length) {
-            return renderNodes(nodeContext.sourceFile, nodeContext.node.children, nodeContext.model)
+            return renderNodes(nodeContext.sourceFile, nodeContext.node.children, nodeContext.model, mapChildren)
                 .then(function (result) {
                     nodeContext.node.childContent = result;
                     nodeContext.node.children = null;
@@ -185,7 +185,7 @@ module.exports = function renderer(options) {
             });
     }
 
-    function renderNodes(sourceFile, nodes, model) {
+    function renderNodes(sourceFile, nodes, model, mapper) {
         model = setupModel(model);
         return q.all(_.reduce(nodes, function (state, node) {
             var prev = state.pop();
@@ -200,6 +200,15 @@ module.exports = function renderer(options) {
             return state;
         }, [q.when('')]))
             .then(function (renderedContent) {
+                if (mapper) {
+                    return _.chain(nodes)
+                        .map(function (node) {
+                            return mapper(node);
+                        })
+                        .object()
+                        .value();
+                }
+
                 return renderedContent.join('');
             });
     }

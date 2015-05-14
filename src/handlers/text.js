@@ -7,5 +7,5 @@ module.exports = function textHandler(nodeContext) {
         return '';
     }
 
-    return binding(nodeContext.node.data, nodeContext.model);
+    return binding((nodeContext.node.data || '').trim(), nodeContext.model);
 };

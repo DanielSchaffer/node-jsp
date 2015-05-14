@@ -7,7 +7,8 @@ describe('renderer', function () {
 
     var renderer, rendererOptions, parser, model,
         tagLibs = {
-            c: 'http://java.sun.com/jsp/jstl/core'
+            c: 'http://java.sun.com/jsp/jstl/core',
+            jsp: 'http://java.sun.com/jsp'
         };
 
     beforeEach(function () {
@@ -179,6 +180,56 @@ describe('renderer', function () {
         renderContent('<!DOCTYPE html>')
             .then(function (result) {
                 expect(result).to.equal('<!DOCTYPE html>');
+            })
+            .then(done, done);
+    });
+
+    it('should render parameterized includes that put content directly in the param body', function (done) {
+
+        renderContent(
+            '<jsp:include page="test/examples/parameterizedInclude.jsp">\n' +
+            '    <jsp:param name="content">\n' +
+            '        <div id="parameterized-content"></div>\n' +
+            '    </jsp:param>\n' +
+            '</jsp:include>', 'jsp')
+            .then(function (result) {
+                expect(result).to.equal('<div id="include-content"><div id="parameterized-content"></div></div>');
+            })
+            .then(done, done);
+    });
+
+    it('should render parameterized includes that put content in the param value attribute', function (done) {
+
+        renderContent(
+            '<c:set var="content"><div id="parameterized-content"></div></c:set>\n' +
+            '<jsp:include page="test/examples/parameterizedInclude.jsp">\n' +
+            '    <jsp:param name="content" value="${content}" />\n' +
+            '</jsp:include>', 'c', 'jsp')
+            .then(function (result) {
+                expect(result).to.equal('<div id="include-content"><div id="parameterized-content"></div></div>');
+            })
+            .then(done, done);
+
+    });
+
+    it('should render HTML comments', function (done) {
+        renderContent(
+            '<!-- foo\n' +
+            'bar\n' +
+            '-->')
+            .then(function (result) {
+                expect(result).to.equal('<!-- foo\nbar\n-->');
+            })
+            .then(done, done);
+    });
+
+    it('should render IE conditional comments', function (done) {
+        renderContent(
+            '<!--[if IE 8]>\n' +
+            '<link rel="stylesheet" type="text/css" href="foo" />\n' +
+            '<![endif]-->')
+            .then(function (result) {
+                expect(result).to.equal('<!--[if IE 8]>\n<link rel="stylesheet" type="text/css" href="foo" />\n<![endif]-->');
             })
             .then(done, done);
     });

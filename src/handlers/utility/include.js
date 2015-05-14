@@ -18,11 +18,16 @@ function include(nodeContext, includeFile) {
 
     return parser.parseFile(resolvedPath)
         .then(function (rawContent) {
+            var param = nodeContext.node.childContent;
+            nodeContext.node.childContent = null;
             return _.extend({}, nodeContext, {
                 sourceFile: resolvedPath,
                 node: {
                     children: rawContent
-                }
+                },
+                model: _.extend({}, nodeContext.model, {
+                    param: param
+                })
             });
         }, function (err) {
             return q.reject(_.extend(err, {
@@ -32,9 +37,9 @@ function include(nodeContext, includeFile) {
         });
 }
 
-include.renderChildrenFirst = true;
+//include.renderChildrenFirst = true;
 
-include.fromAttrs = function includeFromAttrs(attrName, renderChildrenFirst) {
+include.fromAttrs = function includeFromAttrs(attrName, renderChildrenFirst, mapChildren) {
 
     function includedFromAttrs(nodeContext) {
 
@@ -53,6 +58,7 @@ include.fromAttrs = function includeFromAttrs(attrName, renderChildrenFirst) {
     }
 
     includedFromAttrs.renderChildrenFirst = renderChildrenFirst;
+    includedFromAttrs.mapChildren = mapChildren;
     return includedFromAttrs;
 };
 

@@ -22,7 +22,7 @@ module.exports = function namespaces(options) {
 
     function registerPrefix(namespace, prefix) {
         if (!ns[namespace]) {
-            throw 'no handler configured for namespace "' + namespace + '"'
+            throw 'no handler configured for namespace "' + namespace + '"';
         }
 
         ns[namespace].prefix = prefix;
