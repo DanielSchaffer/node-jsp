@@ -18,19 +18,35 @@ var _ = require('underscore'),
         },
         lbracket: {
             next: { allowed: ['ident', 'lparen', 'sqliteral', 'dqliteral', 'lbracket', 'number'], required: true },
-            closedBy: 'rbracket',
-            translate: function translateBracket(token, model, next) {
+            closedBy: ['rbracket'],
+            translate: translateClosedToken
+            /*translate: function translateBracket(token, model, next) {
                 console.log('translateBracket', token, next);
-            }
+            }*/
         },
         ident: {
-            translate: function translateIdent(token, model) {
-                return bindValue(token.value, model);
-            }
+            translate: translateClosedToken,
+            /*translate: function translateIdent(token, model, next) {
+                //return bindValue(token.value, model);
+                return token.value + _.map(next, function (next) {
+                        return next.translate(next.token, model, next.next);
+                    }).join('');
+            },*/
+            next: { allowed: ['dot', 'lbracket'] },
+            continuedBy: ['dot', 'lbracket']
         },
         sqliteral: translateLiteral,
         dqliteral: translateLiteral
     };
+
+function translateClosedToken(token, model, next) {
+    return token.value + _.map(next, function (next) {
+            if (!next.translate) {
+                var foo = '';
+            }
+            return next.translate(next.token, model, next.next);
+        }).join('');
+}
 
 function translateLiteral(token) {
     return token.data;
@@ -77,7 +93,11 @@ function bindValue(expression, model) {
 
 module.exports = function translator(tokens, model) {
 
-    var state = { stack: []};
+    var state = {
+        stack: [],
+        toClose: [],
+        awaitingNext: null
+    };
 
     tokens = tokens.slice(0);
 
@@ -89,61 +109,91 @@ module.exports = function translator(tokens, model) {
         return result;
     }
 
-    function slurp(skipPush, toClose) {
-        var token = tokens.shift(),
-            handler = tokenHandlers[token.name],
+    _.reduce(tokens, function (state, token) {
+
+        var handler = tokenHandlers[token.name],
             translate = handler && handler.translate || defaultTranslator,
-            currentToClose = toClose && toClose.length && _.last(toClose),
-            next;
+            currentToClose = state.toClose.length && _.last(state.toClose),
+            context = {
+                handler: handler,
+                token: token,
+                translate: translate,
+                contents: []
+            };
+
+        if (state.awaitingNext) {
+            var isValidNext = _.contains(state.awaitingNext.handler.next.allowed, token.name);
+            if (!isValidNext && state.awaitingNext.handler.next.required) {
+                throw 'unexpected ' + tokenAsLoggableString(token);
+            }
+            var awaitingNext = state.awaitingNext;
+            state.awaitingNext = null;
+
+            if (!awaitingNext.handler.closedBy && !awaitingNext.handler.continuedBy) {
+                if (isValidNext) {
+                    state.stack.push(awaitingNext.translate(awaitingNext.token, model, token));
+                } else {
+                    state.stack.push(awaitingNext.translate(awaitingNext.token, model));
+                }
+                return state;
+            }
+        }
 
         if (handler && handler.next) {
-            if (handler.closedBy) {
-                if (!toClose) {
-                    toClose = [];
+            state.awaitingNext = context;
+
+            if (handler.closedBy || handler.continuedBy) {
+                if (currentToClose) {
+                    currentToClose.contents.push(context);
                 }
-                toClose.push({ handler: handler, token: token, translate: translate, contents: [] });
-            }
-            next = slurp(true, toClose);
-
-            if (handler.next.required && !next) {
-                throw 'expected one of token "' + handler.next.allowed.join('","') + '", got end-of-input';
+                state.toClose.push(context);
+                return state;
             }
 
-            if (!_.contains(handler.next.allowed, next.token.name)) {
-                if (handler.next.required) {
-                    throw 'unexpected ' + tokenAsLoggableString(next.token);
-                }
-
-                tokens.unshift(token);
-                next = null;
-            }
-        } else if (currentToClose) {
-            if (currentToClose.handler.closedBy === token.name) {
-                toClose.pop();
-                console.log('closing!');
-                currentToClose.translate(currentToClose.token, model, currentToClose.contents);
-            } else {
-                currentToClose.contents.push(token);
-                slurp(true, toClose);
-            }
+            return state;
         }
 
-        if (!skipPush && !currentToClose && (!handler || !handler.closedBy)) {
-            state.stack.push(translate(token, model, next));
+        if (currentToClose) {
+            var canBeClosed =
+                (currentToClose.handler.closedBy && _.contains(currentToClose.handler.closedBy, token.name)) ||
+                (currentToClose.handler.continuedBy && !_.contains(currentToClose.handler.continuedBy, token.name));
+
+            currentToClose.contents.push(context);
+
+            if (canBeClosed) {
+                state.toClose.pop();
+                var closed = currentToClose;
+                currentToClose = state.toClose.length && _.last(state.toClose);
+                if (currentToClose) {
+                    currentToClose.contents.push(closed);
+                } else {
+                    state.stack.push(closed.translate(closed.token, model, closed.contents));
+                }
+            }
+
+            return state;
         }
 
-        return {
-            token: token,
-            translate: translate,
-            next: next
-        };
+        return state;
+    }, state);
+
+    if (state.awaitingNext && state.awaitingNext.handler.next.required) {
+        throw state.stack.join('') + 'expected one of token "' + state.awaitingNext.handler.next.allowed.join('","') + '", got end-of-input';
     }
 
-    while (tokens.length) {
-        slurp();
+    while (state.toClose.length) {
+        var currentToClose = state.toClose.pop();
+        if (currentToClose.closedBy) {
+            throw state.stack.join('') + 'expected one of token "' + currentToClose.closedBy.join('","') + '", got end-of-input';
+        }
+        var closed = currentToClose;
+        currentToClose = state.toClose.length && _.last(state.toClose);
+        if (currentToClose) {
+            currentToClose.contents.push(closed);
+        } else {
+            state.stack.push(closed.translate(closed.token, model, closed.contents));
+        }
     }
 
-    return _.filter(state.stack, function (translatedToken) {
-        return translatedToken !== null;
-    });
+    return state.stack;
 };

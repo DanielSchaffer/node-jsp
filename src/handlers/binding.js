@@ -1,5 +1,4 @@
-var vm = require('vm'),
-    executor = require('./executor'),
+var executor = require('./executor'),
     lexer = require('./binding/lexer'),
     translator = require('./binding/translator'),
 
