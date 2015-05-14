@@ -38,7 +38,6 @@ function chooseTag(nodeContext) {
     }
 
     return '';
-
 }
 
 module.exports = chooseTag;

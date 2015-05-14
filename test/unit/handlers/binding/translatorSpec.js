@@ -71,6 +71,20 @@ describe('translator', function () {
         expect(result[0]).to.equal('!(typeof(foo)===\'undefined\'||foo===\'\'||foo===null)');
     });
 
+    it('should allow identifiers to be negated', function () {
+
+        var expression = 'empty foo || !foo.bar',
+            tokens = lexer(expression);
+
+        var result = translator(tokens);
+
+        expect(result.length).to.equal(3);
+        expect(result[0]).to.equal('(typeof(foo)===\'undefined\'||foo===\'\'||foo===null)');
+        expect(result[1]).to.equal('||');
+        expect(result[2]).to.equal('!foo.bar');
+
+    });
+
     /*
 
     it('should translate a complex expression', function () {

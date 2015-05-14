@@ -9,7 +9,7 @@ var _ = require('underscore'),
             }
         },
         not: {
-            next: { allowed: ['empty'], required: true }
+            next: { allowed: ['empty', 'ident', 'lparen'], required: true }
         },
         dot: {
             next: { allowed: ['ident'], required: true },

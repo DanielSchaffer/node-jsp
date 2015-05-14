@@ -1,6 +1,5 @@
 var _ = require('underscore'),
     tokens = [
-        ['!', 'not'],
         [/^empty\b/, 'empty'],
         ['(', 'lparen'],
         [')', 'rparen'],
@@ -20,6 +19,7 @@ var _ = require('underscore'),
         ['<=', 'lte'],
         ['>', 'gt'],
         ['<', 'lt'],
+        ['!', 'not'],
         [/^[a-zA-Z_]+[\w]*(\.[a-zA-Z_]+[\w]*)*/, 'ident'],
         [/^\d*(\.\d+)*/, 'number'],
         [/^'.*?'/, 'sqliteral'],
@@ -55,7 +55,9 @@ function matchToken(remain) {
         }
     }
 
-    throw 'unrecognized token at \n\t' + remain;
+    throw {
+        message: 'unrecognized token at \n\t' + remain
+    };
 }
 
 function lexer(expression) {
@@ -65,7 +67,15 @@ function lexer(expression) {
         token;
 
     while (remain.length) {
-        token = matchToken(remain);
+        try {
+            token = matchToken(remain);
+        } catch (ex) {
+            throw {
+                message: 'error parsing expression',
+                expression: expression,
+                ex: ex
+            };
+        }
         remain = remain.substring(token.value.length);
 
         if (!token.ignored) {

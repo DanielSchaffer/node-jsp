@@ -35,4 +35,9 @@ describe('binding', function () {
         test('${!empty foo.boor}', false);
     });
 
+    it('should stringify expressions if they contain anything more than a single binding expression', function () {
+        test('${foo.bar} ', '1234 ');
+        test('${foo.bar} ${oy.vey}', '1234 5678');
+    });
+
 });

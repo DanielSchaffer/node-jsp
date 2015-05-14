@@ -16,15 +16,17 @@ function setTag(nodeContext) {
     }
 
     if (util.definedAndNonNull(nodeContext.node.attribs.value)) {
-        value = binding(nodeContext.node.attribs.value, nodeContext.model);
+        value = binding(nodeContext.node.attribs.value, nodeContext.model) || '';
     } else {
         value = nodeContext.node.childContent || '';
     }
 
-    value = value.replace(/"/g, '\\"');
-    value = value.replace(/\n\s*/g, '');
+    if (_.isString(value)) {
+        value = value.replace(/"/g, '\\"');
+        value = value.replace(/\n\s*/g, '');
+    }
 
-    if (util.definedAndNonNull(value) && (isNaN(value) || value === '') && !/^\{.*\}$/.test(value)) {
+    if (_.isString(value) && util.definedAndNonNull(value) && !/^\{.*\}$/.test(value)) {
         value = '"' + value + '"';
     }
 

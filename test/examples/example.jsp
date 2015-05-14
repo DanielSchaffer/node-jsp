@@ -2,6 +2,10 @@
 
 <%-- comment! --%>
 
+<%--
+multiline comment!
+--%>
+
 <c:set var="foo" value="wat" />
 
 <c:set var="testSetContent">

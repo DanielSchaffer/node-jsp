@@ -3,7 +3,7 @@ var path = require('path'),
     _ = require('underscore'),
     expect = chai.expect;
 
-describe.only('renderer', function () {
+describe('renderer', function () {
 
     var renderer, rendererOptions, parser, model,
         tagLibs = {
@@ -126,6 +126,59 @@ describe.only('renderer', function () {
             .then(function (result) {
                 expect(result).to.equal('');
                 expect(model.qs).to.equal('?foo=bizzle');
+            })
+            .then(done, done);
+    });
+
+    it('should render tags inside c:when', function (done) {
+        var content =
+            '<c:choose>\n' +
+            '    <c:when test="${foo}"><c:if test="${foo.bar}">yes</c:if></c:when>\n' +
+            '    <c:otherwise>no</c:otherwise>\n' +
+            '</c:choose>';
+
+        model.foo = { bar: 'blah' };
+
+        renderContent(content, 'c')
+            .then(function (result) {
+                expect(result).to.equal('yes');
+            })
+            .then(done, done);
+    });
+
+    it('should render tags inside c:otherwise', function (done) {
+        var content =
+            '<c:choose>\n' +
+            '    <c:when test="${foo}"><c:if test="${foo.bar}">yes</c:if></c:when>\n' +
+            '    <c:otherwise>no</c:otherwise>\n' +
+            '</c:choose>';
+
+        renderContent(content, 'c')
+            .then(function (result) {
+                expect(result).to.equal('no');
+            })
+            .then(done, done);
+    });
+
+    it('should render script tags', function (done) {
+        var content =
+            '<c:choose>\n' +
+            '    <c:when test="${foo}"><c:if test="${foo.bar}">yes</c:if></c:when>\n' +
+            '    <c:otherwise><script>scriptyscript</script></c:otherwise>\n' +
+            '</c:choose>';
+
+        renderContent(content, 'c')
+            .then(function (result) {
+                expect(result).to.equal('<script>scriptyscript</script>');
+            })
+            .then(done, done);
+    });
+
+    it('should render HTML directives', function (done) {
+
+        renderContent('<!DOCTYPE html>')
+            .then(function (result) {
+                expect(result).to.equal('<!DOCTYPE html>');
             })
             .then(done, done);
     });

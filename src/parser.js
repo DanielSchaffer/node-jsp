@@ -25,7 +25,7 @@ module.exports = function parser() {
     }
 
     function cleanJspComments(content) {
-        return content.replace(/<%--.*?--%>/g, '');
+        return content.replace(/<%--[\s\S]*?--%>/g, '');
     }
 
     function parseContent(content) {

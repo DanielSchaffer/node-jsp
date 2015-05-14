@@ -8,7 +8,8 @@ var fs = require('fs'),
     parser = require('./parser'),
 
     tagNamespaces = require('./handlers/tags/namespaces'),
-    htmlHandler = require('./handlers/tags/html'),
+    htmlDefaultTagHandler = require('./handlers/tags/html/htmlTag'),
+    htmlDirectiveHandler = require('./handlers/tags/html/htmlDirective'),
     textHandler = require('./handlers/text');
 
 module.exports = function renderer(options) {
@@ -17,7 +18,13 @@ module.exports = function renderer(options) {
         directiveHandlers = handlers && handlers.directives || {},
 
         tags = _.extend({
-            html: htmlHandler
+            html: {
+                tag: htmlDefaultTagHandler,
+                script: htmlDefaultTagHandler,
+                comment: htmlDefaultTagHandler,
+                directive: htmlDirectiveHandler,
+                style: htmlDefaultTagHandler
+            }
         }, handlers && handlers.tags || {}),
 
         context = {
@@ -60,21 +67,30 @@ module.exports = function renderer(options) {
         return processHandler(findDirectiveHandler(directiveName), nodeContext);
     }
 
-    function findTagHandler(tagName) {
-        if (!tags[tagName]) {
-            tags[tagName] = q.when(context.tagNamespaces.getHandler(tagName))
-                .then(function (handler) {
-                    return handler;
-                }, function () {
-                    return tags.html;
-                });
+    function findTagHandler(node) {
+
+        if (node.type === 'tag') {
+            if (node.name === 'html') {
+                return tags.html.tag;
+            }
+
+            if (!tags[node.name]) {
+                tags[node.name] = q.when(context.tagNamespaces.getHandler(node.name))
+                    .then(function (handler) {
+                        return handler;
+                    }, function () {
+                        return tags.html.tag;
+                    });
+            }
+
+            return tags[node.name];
         }
 
-        return tags[tagName];
+        return tags.html[node.type];
     }
 
     function renderTag(nodeContext) {
-        return processHandler(findTagHandler(nodeContext.node.name), nodeContext);
+        return processHandler(findTagHandler(nodeContext.node), nodeContext);
     }
 
     function processHandler(handlerPromise, nodeContext) {
@@ -111,18 +127,21 @@ module.exports = function renderer(options) {
 
         switch(nodeContext.node.type) {
 
-            case 'tag':
+            case 'text':
+                content = textHandler(nodeContext);
+                break;
+
+            /*case 'tag':
+             case 'script':
+             case 'comment':
+             case 'directive':*/
+            default:
                 if (nodeContext.node.name === '%@') {
                     content = renderDirective(nodeContext);
                 } else {
                     content = renderTag(nodeContext);
                 }
                 break;
-
-            case 'text':
-                content = textHandler(nodeContext);
-                break;
-
         }
 
         return q.when(content || '')
