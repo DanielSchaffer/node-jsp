@@ -2,7 +2,8 @@ var executor = require('./executor'),
     lexer = require('./binding/lexer'),
     translator = require('./binding/translator'),
 
-    pattern = /\$\{(.+?)\}/g;
+    pattern = /\$\{(.+?)\}/g,
+    standalonePattern = /^\$\{(.+?)\}$/;
 
 function bind(expression, model) {
 
@@ -14,6 +15,11 @@ function bind(expression, model) {
 }
 
 module.exports = function binding(input, model) {
+
+    var standaloneMatch = input.match(standalonePattern);
+    if (standaloneMatch) {
+        return bind(standaloneMatch[1], model);
+    }
 
     return input.replace(pattern, function replace(match, expression) {
         return bind(expression, model);

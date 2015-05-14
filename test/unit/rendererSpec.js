@@ -3,7 +3,7 @@ var path = require('path'),
     _ = require('underscore'),
     expect = chai.expect;
 
-describe('renderer', function () {
+describe.only('renderer', function () {
 
     var renderer, rendererOptions, parser, model,
         tagLibs = {
@@ -96,6 +96,36 @@ describe('renderer', function () {
         renderContent('<c:set var="foo" value="wat" />${foo}', 'c')
             .then(function (result) {
                 expect(result).to.equal('wat');
+            })
+            .then(done, done);
+    });
+
+    it('should make c:set set the var to empty if the conditional inside evaluates to empty', function (done) {
+        var content =
+            '<c:set var="qs">\n' +
+            '    <c:if test="${!empty foo}">?foo=${foo}</c:if>\n' +
+            '</c:set>';
+
+        renderContent(content, 'c')
+            .then(function (result) {
+                expect(result).to.equal('');
+                expect(model.qs).to.equal('');
+            })
+            .then(done, done);
+    });
+
+    it('should render a conditional tag inside a c:set', function (done) {
+        var content =
+            '<c:set var="qs">\n' +
+            '    <c:if test="${!empty foo}">?foo=${foo}</c:if>\n' +
+            '</c:set>';
+
+        model.foo = 'bizzle';
+
+        renderContent(content, 'c')
+            .then(function (result) {
+                expect(result).to.equal('');
+                expect(model.qs).to.equal('?foo=bizzle');
             })
             .then(done, done);
     });

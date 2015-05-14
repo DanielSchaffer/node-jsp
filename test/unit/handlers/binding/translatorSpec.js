@@ -60,6 +60,17 @@ describe('translator', function () {
 
     });
 
+    it('should translate "!empty" correctly', function () {
+
+        var expression = '!empty foo',
+            tokens = lexer(expression);
+
+        var result = translator(tokens);
+
+        expect(result.length).to.equal(1);
+        expect(result[0]).to.equal('!(typeof(foo)===\'undefined\'||foo===\'\'||foo===null)');
+    });
+
     /*
 
     it('should translate a complex expression', function () {

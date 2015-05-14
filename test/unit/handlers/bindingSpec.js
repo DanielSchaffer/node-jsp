@@ -16,7 +16,7 @@ describe('binding', function () {
     function test(expression, expected) {
         var result = binding(expression, model);
 
-        expect(result).to.equal(expected.toString());
+        expect(result).to.equal(expected);
     }
 
     it('should bind simple properties', function () {
@@ -29,6 +29,10 @@ describe('binding', function () {
 
     it('should return an empty string when attempting to access a property of a null or empty object', function () {
         test('${foo.boor.wat}', '');
+    });
+
+    it('should return false when binding an inverted empty token', function () {
+        test('${!empty foo.boor}', false);
     });
 
 });

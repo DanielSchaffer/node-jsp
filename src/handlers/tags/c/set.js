@@ -1,7 +1,8 @@
 var vm = require('vm'),
     _ = require('underscore'),
 
-    binding = require('../../binding');
+    binding = require('../../binding'),
+    util = require('../../../util');
 
 function setTag(nodeContext) {
 
@@ -14,23 +15,16 @@ function setTag(nodeContext) {
         };
     }
 
-    if (!nodeContext.node.attribs.value && !nodeContext.node.childContent) {
-        throw {
-            message: 'missing required content - no child content or value attribute',
-            nodeContext: nodeContext
-        };
-    }
-
-    if (nodeContext.node.attribs.value) {
+    if (util.definedAndNonNull(nodeContext.node.attribs.value)) {
         value = binding(nodeContext.node.attribs.value, nodeContext.model);
     } else {
-        value = nodeContext.node.childContent;
+        value = nodeContext.node.childContent || '';
     }
 
     value = value.replace(/"/g, '\\"');
     value = value.replace(/\n\s*/g, '');
 
-    if (value && isNaN(value) && (value[0] !== '{' || value[value.length - 1] !== '}')) {
+    if (util.definedAndNonNull(value) && (isNaN(value) || value === '') && !/^\{.*\}$/.test(value)) {
         value = '"' + value + '"';
     }
 
@@ -51,7 +45,7 @@ function setTag(nodeContext) {
         };
     }
 
-    return null;
+    return '';
 }
 setTag.renderChildrenFirst = true;
 

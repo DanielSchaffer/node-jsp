@@ -11,13 +11,6 @@ function ifTag(nodeContext) {
         };
     }
 
-    if (!nodeContext.node.childContent) {
-        throw {
-            message: 'missing required content - no child content',
-            nodeContext: nodeContext
-        };
-    }
-
     ifExpr = binding(nodeContext.node.attribs.test, nodeContext.model);
 
     try {
