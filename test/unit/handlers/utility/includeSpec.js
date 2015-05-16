@@ -1,5 +1,6 @@
 var chai = require('chai'),
-    expect = chai.expect;
+    expect = chai.expect,
+    profiler = require('../../../../src/profiler');
 
 function fail(message) {
     return function(reason) {
@@ -16,10 +17,12 @@ function fail(message) {
 
 describe('include', function () {
 
-    var include;
+    var include,
+        profile;
 
     beforeEach(function () {
         include = require('../../../../src/handlers/utility/include');
+        profile = profiler.passthrough();
     });
 
     it('should be a function', function () {
@@ -30,7 +33,7 @@ describe('include', function () {
 
         var sourceFile = 'sourceFile/sourceFile.jsp';
 
-        include({ sourceFile: sourceFile, node: {} })
+        include({ sourceFile: sourceFile, node: {} }, null, profile)
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('no includeFile provided');
             })
@@ -43,7 +46,7 @@ describe('include', function () {
         var sourceFile = __dirname + '/sourceFile/someFile.jsp',
             includeFile = 'does.not.exist';
 
-        include({ sourceFile: sourceFile, node: {} }, includeFile)
+        include({ sourceFile: sourceFile, node: {} }, includeFile, profile)
             .then(fail('should not be resolved'), function (reason) {
                 expect(reason.message).to.equal('could not find file at ' + __dirname + '/sourceFile/does.not.exist');
             })
@@ -56,7 +59,7 @@ describe('include', function () {
         var sourceFile = __dirname + '/exampleSource.jsp',
             includeFile = __dirname + '/includeSpec.included.jsp';
 
-        include({ sourceFile: sourceFile, node: {} }, includeFile)
+        include({ sourceFile: sourceFile, node: {} }, includeFile, profile)
             .then(function (result) {
                 expect(result.node.children).to.deep.have.members([{ type: 'tag', name: 'div' }]);
                 expect(result.sourceFile).to.equal(includeFile);
@@ -69,10 +72,11 @@ describe('include', function () {
 
 describe('include.fromAttrs', function () {
 
-    var include;
+    var include, profile;
 
     beforeEach(function () {
         include = require('../../../../src/handlers/utility/include');
+        profile = profiler.passthrough();
     });
 
     it('should return a rejected promise if no node object is passed', function (done) {
@@ -108,7 +112,7 @@ describe('include.fromAttrs', function () {
             node = { attribs: { file: 'includeSpec.included.jsp' } },
             sourceFile = __dirname + '/example.jsp';
 
-        include.fromAttrs(attrName)({ sourceFile: sourceFile, node: node })
+        include.fromAttrs(attrName)({ sourceFile: sourceFile, node: node }, profile)
             .then(function (result) {
                 expect(result.node.children).to.deep.have.members([{ type: 'tag', name: 'div' }]);
             }, fail('should not be rejected'))

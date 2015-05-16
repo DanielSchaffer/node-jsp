@@ -1,5 +1,5 @@
 var htmlparser = require('htmlparser'),
-    q = require('./q.allObject'),
+    when = require('when'),
 
     fileReader = require('./fileReader');
 
@@ -9,7 +9,7 @@ module.exports = function parser() {
     htmlparser.DefaultHandler._emptyTags['%@'] = 1;
 
     function parseHtml(content) {
-        var deferred = q.defer(),
+        var deferred = when.defer(),
             handler = new htmlparser.DefaultHandler(function (err, dom) {
                 if (err) {
                     deferred.reject(err);
@@ -37,10 +37,14 @@ module.exports = function parser() {
     }
 
     function parseFile(file) {
-        return fileReader.read(file)
-            .then(function (rawContent) {
-                return parseContent(rawContent);
-            });
+        var read = fileReader.read(file);
+
+        return read.then(function (rawContent) {
+            if (!read.parsed) {
+                read.parsed = parseContent(rawContent);
+            }
+            return read.parsed;
+        });
     }
 
     return {

@@ -1,12 +1,15 @@
-var vm = require('vm'),
-    _ = require('underscore'),
+var _ = require('underscore'),
+
+    executor = require('../../executor'),
 
     binding = require('../../binding'),
     util = require('../../../util');
 
-function setTag(nodeContext) {
+function setTag(nodeContext, profiler) {
 
     var value, setExpr;
+
+    var log = profiler.start('setTag', 'setTag');
 
     if (!nodeContext.node.attribs.var) {
         throw {
@@ -16,7 +19,7 @@ function setTag(nodeContext) {
     }
 
     if (util.definedAndNonNull(nodeContext.node.attribs.value)) {
-        value = binding(nodeContext.node.attribs.value, nodeContext.model) || '';
+        value = binding(nodeContext.sourceFile, nodeContext.node.attribs.value, nodeContext.model, log.profiler) || '';
     } else {
         value = nodeContext.node.childContent || '';
     }
@@ -33,18 +36,24 @@ function setTag(nodeContext) {
     setExpr = nodeContext.node.attribs.var + '=' + value;
 
     try {
-        vm.runInContext(setExpr, nodeContext.model);
+
+        executor(nodeContext.sourceFile, setExpr, nodeContext.model, true, log.profiler);
         nodeContext.node.childContent = '';
+
     } catch(ex) {
+
         throw {
             message: 'error executing expression from c:set tag',
             expression: setExpr,
             model: nodeContext.model,
             ex: {
                 message: ex.message,
-                stack: ex.stack.replace('\\\\', '\\')
+                stack: ex.stack
             }
         };
+
+    } finally {
+        log.end();
     }
 
     return '';

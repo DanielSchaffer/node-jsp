@@ -1,7 +1,6 @@
 var chai = require('chai'),
     expect = chai.expect,
 
-    lexer = require('../../../../src/handlers/binding/lexer'),
     translator = require('../../../../src/handlers/binding/translator');
 
 describe('translator', function () {
@@ -9,9 +8,7 @@ describe('translator', function () {
     it('should translate a simple identifier binding', function () {
 
         var expression = 'foo',
-            tokens = lexer(expression);
-
-        var result = translator(tokens);
+            result = translator.translate(expression);
 
         expect(result.length).to.equal(1);
         expect(result[0]).to.equal('foo');
@@ -21,9 +18,7 @@ describe('translator', function () {
     it('should translate a complex identifier binding', function () {
 
         var expression = 'foo.bar',
-            tokens = lexer(expression);
-
-        var result = translator(tokens);
+            result = translator.translate(expression);
 
         expect(result.length).to.equal(1);
         expect(result[0]).to.equal('foo.bar');
@@ -34,9 +29,7 @@ describe('translator', function () {
     it('should translate an expression using hash accessors', function () {
 
         var expression = 'foo["bar"]',
-            tokens = lexer(expression);
-
-        var result = translator(tokens);
+            result = translator.translate(expression);
 
         expect(result.length).to.equal(2);
         expect(result[0]).to.equal('foo');
@@ -48,9 +41,7 @@ describe('translator', function () {
     it('should translate an expression using hash accessors', function () {
 
         var expression = 'foo["bar"] || other',
-            tokens = lexer(expression);
-
-        var result = translator(tokens);
+            result = translator.translate(expression);
 
         expect(result.length).to.equal(4);
         expect(result[0]).to.equal('foo');
@@ -63,9 +54,7 @@ describe('translator', function () {
     it('should translate "!empty" correctly', function () {
 
         var expression = '!empty foo',
-            tokens = lexer(expression);
-
-        var result = translator(tokens);
+            result = translator.translate(expression);
 
         expect(result.length).to.equal(1);
         expect(result[0]).to.equal('!(typeof(foo)===\'undefined\'||foo===\'\'||foo===null)');
@@ -74,9 +63,7 @@ describe('translator', function () {
     it('should allow identifiers to be negated', function () {
 
         var expression = 'empty foo || !foo.bar',
-            tokens = lexer(expression);
-
-        var result = translator(tokens);
+            result = translator.translate(expression);
 
         expect(result.length).to.equal(3);
         expect(result[0]).to.equal('(typeof(foo)===\'undefined\'||foo===\'\'||foo===null)');

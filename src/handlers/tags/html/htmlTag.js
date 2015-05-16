@@ -8,16 +8,18 @@ var _ = require('underscore'),
         'link'
     ];
 
-module.exports = function htmlPassThroughHandler(nodeContext) {
+module.exports = function htmlPassThroughHandler(nodeContext, profiler) {
     var begin, end;
+
+    var log = profiler.start('htmlTag', 'htmlTag');
 
     begin = '<' + nodeContext.node.name;
     if (nodeContext.node.attribs) {
         _.each(nodeContext.node.attribs, function (value, name) {
             if (name === value) {
-                begin += ' ' + binding(value, nodeContext.model);
+                begin += ' ' + binding(nodeContext.sourceFile, value, nodeContext.model, log.profiler);
             } else {
-                begin += ' ' + name + '="' + binding(value, nodeContext.model) + '"';
+                begin += ' ' + name + '="' + binding(nodeContext.sourceFile, value, nodeContext.model, log.profiler) + '"';
             }
         });
     }
@@ -29,6 +31,7 @@ module.exports = function htmlPassThroughHandler(nodeContext) {
     }
     begin += '>';
 
+    log.end();
 
     return {
         begin: begin,

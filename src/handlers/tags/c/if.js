@@ -1,6 +1,8 @@
 var binding = require('../../binding');
 
-function ifTag(nodeContext) {
+function ifTag(nodeContext, profiler) {
+
+    var log = profiler.start('ifTag', 'ifTag');
 
     var ifExpr;
 
@@ -11,23 +13,15 @@ function ifTag(nodeContext) {
         };
     }
 
-    ifExpr = binding(nodeContext.node.attribs.test, nodeContext.model);
+    ifExpr = binding(nodeContext.sourceFile, nodeContext.node.attribs.test, nodeContext.model, log.profiler);
 
-    try {
-        // FIXME: why is it coming out 'null' (a string) instead of just the value null?
-        if (ifExpr && ifExpr !== 'null') {
-            return '';
-        }
-    } catch(ex) {
-        throw {
-            message: 'error executing expression from c:if tag',
-            expression: ifExpr,
-            model: nodeContext.model,
-            ex: ex.message
-        };
+    // FIXME: why is it coming out 'null' (a string) instead of just the value null?
+    if (ifExpr && ifExpr !== 'null') {
+        return '';
     }
 
     nodeContext.node.childContent = null;
+    log.end();
     return '';
 }
 ifTag.renderChildrenFirst = true;

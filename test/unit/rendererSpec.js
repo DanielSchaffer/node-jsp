@@ -1,11 +1,12 @@
 var path = require('path'),
     chai = require('chai'),
     _ = require('underscore'),
-    expect = chai.expect;
+    expect = chai.expect,
+    profiler = require('../../src/profiler');
 
 describe('renderer', function () {
 
-    var renderer, rendererOptions, parser, model,
+    var renderer, rendererOptions, parser, model, profile,
         tagLibs = {
             c: 'http://java.sun.com/jsp/jstl/core',
             jsp: 'http://java.sun.com/jsp'
@@ -26,6 +27,7 @@ describe('renderer', function () {
         renderer = require('../../src/renderer')(rendererOptions);
         parser = require('../../src/parser');
         model = {};
+        profile = profiler.passthrough();
     });
 
     function tagLib(namespaces) {
@@ -39,7 +41,7 @@ describe('renderer', function () {
         var namespaces = Array.prototype.slice.call(arguments, 1);
         return parser.parseContent(tagLib(namespaces) + content)
             .then(function (dom) {
-                return renderer.renderNodes('test', dom, model);
+                return renderer.renderNodes('test', dom, model, null, profile);
             });
     }
 
@@ -239,7 +241,7 @@ describe('renderer', function () {
         var filePath = path.resolve(__dirname, '../examples/example.jsp'),
             model = { foo: 'bar', oy: 'vey' };
 
-        renderer.renderFile(filePath, model)
+        renderer.renderFile(filePath, model, profile)
             .then(function (result) {
                 expect(result.replace(/\n\s*/g)).to.equal(
                     '<div id="if-content"></div>' +

@@ -2,7 +2,9 @@ var _ = require('underscore'),
 
     binding = require('../../binding');
 
-function chooseTag(nodeContext) {
+function chooseTag(nodeContext, profiler) {
+
+    var log = profiler.start('chooseTag', 'chooseTag');
 
     var match = _.find(nodeContext.node.children, function (childNode) {
 
@@ -19,7 +21,7 @@ function chooseTag(nodeContext) {
             };
         }
 
-        test = binding(childNode.attribs.test, nodeContext.model);
+        test = binding(nodeContext.sourceFile, childNode.attribs.test, nodeContext.model, log.profiler);
 
         return test && test !== 'null';
 
@@ -36,6 +38,8 @@ function chooseTag(nodeContext) {
     } else {
         nodeContext.node.children = null;
     }
+
+    log.end();
 
     return '';
 }

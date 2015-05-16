@@ -86,6 +86,7 @@ function lexer(expression) {
     return result;
 }
 
-lexer.tokens = tokenNames;
-
-module.exports = lexer;
+module.exports = {
+    lex: lexer,
+    tokens: tokenNames
+};

@@ -1,4 +1,5 @@
-var _ = require('underscore'),
+var lexer = require('./lexer'),
+    _ = require('underscore'),
 
     tokenHandlers = {
         empty: {
@@ -79,7 +80,7 @@ function bindValue(expression, model) {
     return JSON.stringify(target);
 }
 
-module.exports = function translator(tokens) {
+function translateTokens(tokens) {
 
     var state = {
         stack: [],
@@ -192,4 +193,24 @@ module.exports = function translator(tokens) {
     }
 
     return state.stack;
-};
+}
+
+function translateExpression(expression) {
+    var tokens = lexer.lex(expression);
+    return translateTokens(tokens);
+}
+
+module.exports = (function translator() {
+    var cache = {};
+
+    return {
+        translate: function translate(expression) {
+            var cached = cache[expression];
+            if (typeof (cached) === 'undefined') {
+                cached = translateExpression(expression);
+                cache[expression] = cached;
+            }
+            return cached;
+        }
+    };
+}());

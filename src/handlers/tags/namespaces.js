@@ -1,4 +1,4 @@
-var q = require('q'),
+var when = require('when'),
     _ = require('underscore');
 
 var builtIn = {
@@ -35,13 +35,13 @@ module.exports = function namespaces(options) {
             name = parts[1];
 
         if (!handlersByPrefix[prefix]) {
-            return q.reject({
+            return when.reject({
                 message: 'prefix "' + prefix + '" has not been configured'
             });
         }
 
         if (!handlersByPrefix[prefix].handlerPath && !handlersByPrefix[prefix][name]) {
-            return q.reject({
+            return when.reject({
                 message: 'no handler registered for tag ' + tagName
             });
         }
@@ -50,7 +50,7 @@ module.exports = function namespaces(options) {
             try {
                 return require(handlersByPrefix[prefix].handlerPath + name);
             } catch (ex) {
-                return q.reject({
+                return when.reject({
                     message: 'exception loading handler',
                     ex: {
                         message: ex.message,

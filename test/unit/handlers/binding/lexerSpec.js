@@ -9,7 +9,7 @@ describe('lexer', function () {
 
         it('should lex a simple identifier expression', function () {
 
-            var result = lexer('foo');
+            var result = lexer.lex('foo');
 
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
@@ -19,7 +19,7 @@ describe('lexer', function () {
 
         it('should lex a simple identifier expression with numbers', function () {
 
-            var result = lexer('foo12');
+            var result = lexer.lex('foo12');
 
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
@@ -29,7 +29,7 @@ describe('lexer', function () {
 
         it('should lex a simple identifier expression with numbers followed by numbers', function () {
 
-            var result = lexer('foo12boo');
+            var result = lexer.lex('foo12boo');
 
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
@@ -40,7 +40,7 @@ describe('lexer', function () {
 
         it('should lex an identifier expression with 2 levels of properties', function () {
 
-            var result = lexer('foo.bar');
+            var result = lexer.lex('foo.bar');
 
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
@@ -51,7 +51,7 @@ describe('lexer', function () {
 
         it('should lex an identifier expression with 3 levels of properties', function () {
 
-            var result = lexer('foo.bar.oy');
+            var result = lexer.lex('foo.bar.oy');
 
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
@@ -61,7 +61,7 @@ describe('lexer', function () {
 
         it('should lex an identifier expression using hash accessors', function () {
 
-            var result = lexer('foo["bar"]');
+            var result = lexer.lex('foo["bar"]');
 
             expect(result).to.be.an('array');
             expect(result.length).to.equal(4);
@@ -78,7 +78,7 @@ describe('lexer', function () {
 
         it('should lex a simple number', function () {
 
-            var result = lexer('1');
+            var result = lexer.lex('1');
 
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
@@ -88,7 +88,7 @@ describe('lexer', function () {
 
         it('should lex a number with decimals and preceding zero', function () {
 
-            var result = lexer('0.1234');
+            var result = lexer.lex('0.1234');
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
             expect(result).to.have.property(0).that.deep.equals({ name: lexer.tokens.number, value: '0.1234' });
@@ -97,7 +97,7 @@ describe('lexer', function () {
 
         it('should lex a number with decimals and no preceding zero', function () {
 
-            var result = lexer('.1234');
+            var result = lexer.lex('.1234');
             expect(result).to.be.an('array');
             expect(result.length).to.equal(1);
             expect(result).to.have.property(0).that.deep.equals({ name: lexer.tokens.number, value: '.1234' });
@@ -110,7 +110,7 @@ describe('lexer', function () {
 
         it('should ignore whitespace', function () {
 
-            var result = lexer('foo && bar && oy');
+            var result = lexer.lex('foo && bar && oy');
             expect(result).to.be.an('array');
             expect(result.length).to.equal(5);
             expect(result).to.have.property(0).that.deep.equals({ name: lexer.tokens.ident, value: 'foo' });
@@ -127,7 +127,7 @@ describe('lexer', function () {
 
         it('should lex the empty keyword', function () {
 
-            var result = lexer('empty foo');
+            var result = lexer.lex('empty foo');
             expect(result).to.be.an('array');
             expect(result.length).to.equal(2);
             expect(result).to.have.property(0).that.deep.equals({ name: lexer.tokens.empty, value: 'empty' });
@@ -137,7 +137,7 @@ describe('lexer', function () {
 
         it('should lex not empty', function () {
 
-            var result = lexer('!empty foo');
+            var result = lexer.lex('!empty foo');
             expect(result).to.be.an('array');
             expect(result.length).to.equal(3);
             expect(result).to.have.property(0).that.deep.equals({ name: lexer.tokens.not, value: '!' });
@@ -152,7 +152,7 @@ describe('lexer', function () {
 
         it('should lex this long absurd expression', function () {
 
-            var result = lexer('!empty foo && foo.bar >= oy.vey ? (oy.vey + 1234.5678) : (foo.bar / .4321)');
+            var result = lexer.lex('!empty foo && foo.bar >= oy.vey ? (oy.vey + 1234.5678) : (foo.bar / .4321)');
             expect(result).to.be.an('array');
             expect(result.length).to.equal(19);
             expect(result).to.have.property(0).that.deep.equals({ name: lexer.tokens.not, value: '!' });
@@ -179,7 +179,7 @@ describe('lexer', function () {
 
         it('should lex this silly expression too', function () {
 
-            var result = lexer('(featureGates["ThirdPartyOfferContinuousHeaderOffers"] || false)');
+            var result = lexer.lex('(featureGates["ThirdPartyOfferContinuousHeaderOffers"] || false)');
 
         });
 
