@@ -18,7 +18,7 @@ module.exports = function executor(sourceFile, expression, model, skipTranslate,
         log = profiler.start('executor', 'cache hit');
     }
 
-    var result = cachedExpression.runInContext(model, { filename: sourceFile });
+    var result = cachedExpression.runInNewContext(model, { filename: sourceFile });
     log.end();
     return result;
 };
